@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -23,9 +23,7 @@ export function CepSearch({ address, onAddressChange, onAddressComplete }: CepSe
   const [addressConfirmed, setAddressConfirmed] = useState(false)
 
   const formatCep = (value: string) => {
-    // Remove tudo que não é número
     const numbers = value.replace(/\D/g, "")
-    // Aplica a máscara 00000-000
     if (numbers.length <= 5) {
       return numbers
     }
@@ -43,10 +41,11 @@ export function CepSearch({ address, onAddressChange, onAddressComplete }: CepSe
     setAddressConfirmed(false)
   }
 
-  const searchCep = async (cep: string) => {
-    const cleanCep = cep.replace(/\D/g, "")
+  const searchCep = async () => {
+    const cleanCep = address.cep.replace(/\D/g, "")
 
     if (cleanCep.length !== 8) {
+      setError("CEP deve ter 8 dígitos")
       return
     }
 
@@ -94,18 +93,6 @@ export function CepSearch({ address, onAddressChange, onAddressComplete }: CepSe
     }
   }
 
-  // Busca automática quando CEP estiver completo
-  useEffect(() => {
-    const cleanCep = address.cep.replace(/\D/g, "")
-    if (cleanCep.length === 8) {
-      const timeoutId = setTimeout(() => {
-        searchCep(address.cep)
-      }, 500) // Debounce de 500ms
-
-      return () => clearTimeout(timeoutId)
-    }
-  }, [address.cep])
-
   const handleMapConfirm = () => {
     setShowMap(false)
     setAddressConfirmed(true)
@@ -134,20 +121,23 @@ export function CepSearch({ address, onAddressChange, onAddressComplete }: CepSe
         <Label htmlFor="cep" className="text-cynthia-green-dark font-medium">
           CEP *
         </Label>
-        <div className="relative">
+        <div className="flex gap-2">
           <Input
             id="cep"
             placeholder="00000-000"
             value={address.cep}
             onChange={(e) => handleCepChange(e.target.value)}
             maxLength={9}
-            className="border-cynthia-yellow-mustard/50 focus:border-cynthia-green-dark text-cynthia-green-dark pr-10"
+            className="border-cynthia-yellow-mustard/50 focus:border-cynthia-green-dark text-cynthia-green-dark"
           />
-          {isLoading && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <Loader2 className="w-4 h-4 animate-spin text-cynthia-green-dark" />
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={searchCep}
+            disabled={isLoading || address.cep.replace(/\D/g, "").length !== 8}
+            className="px-4 py-2 bg-cynthia-green-dark text-white rounded-md hover:bg-cynthia-green-dark/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Buscar"}
+          </button>
         </div>
       </div>
 

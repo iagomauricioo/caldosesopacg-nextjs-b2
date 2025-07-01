@@ -27,6 +27,22 @@ export interface ClientResponse {
   timestamp: string
 }
 
+export interface ClientAddressResponse {
+  success: boolean
+  statusCode: number
+  message: string
+  data: {
+    enderecoId: string
+    rua: string
+    complemento?: string
+    numero: string
+    bairro: string
+    pontoReferencia?: string
+    cep: string
+  }
+  timestamp: string
+}
+
 export interface ClientFormData {
   nome: string
   cpf: string
