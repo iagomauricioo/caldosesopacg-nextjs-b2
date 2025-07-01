@@ -15,7 +15,7 @@ import { Minus, Plus, Trash2, ShoppingBag, MapPin, User, CreditCard, CheckCircle
 import Image from "next/image"
 
 export default function CartPage() {
-  const { items, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCart()
+  const { state, dispatch, getSubtotal, getTotal, getItemCount } = useCart()
   const { showToast } = useToast()
   const { getProductImage } = useProducts()
 
@@ -31,12 +31,18 @@ export default function CartPage() {
     { number: 4, title: "Finalizar", icon: CheckCircle, completed: false },
   ]
 
-  const handleQuantityChange = (productId: number, variacao: string, newQuantity: number) => {
+  const handleQuantityChange = (productId: number, variationSize: number, newQuantity: number) => {
     if (newQuantity === 0) {
-      removeFromCart(productId, variacao)
+      dispatch({
+        type: "REMOVE_ITEM",
+        payload: { productId, variationSize },
+      })
       showToast("Item removido do carrinho", "success")
     } else {
-      updateQuantity(productId, variacao, newQuantity)
+      dispatch({
+        type: "UPDATE_QUANTITY",
+        payload: { productId, variationSize, quantity: newQuantity },
+      })
     }
   }
 
@@ -61,7 +67,7 @@ export default function CartPage() {
   const handleFinishOrder = () => {
     // Aqui você implementaria a lógica para finalizar o pedido
     showToast("Pedido finalizado com sucesso!", "success")
-    clearCart()
+    dispatch({ type: "CLEAR_CART" })
     // Redirecionar para página de confirmação ou WhatsApp
   }
 
@@ -72,7 +78,7 @@ export default function CartPage() {
     })
   }
 
-  if (items.length === 0) {
+  if (state.items.length === 0) {
     return (
       <div className="min-h-screen bg-cynthia-cream">
         <Header />
@@ -142,7 +148,18 @@ export default function CartPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Step 1: Address */}
-            {currentStep === 1 && <CepSearch onAddressConfirmed={handleAddressConfirmed} />}
+            {currentStep === 1 && (
+              <CepSearch
+                address={state.deliveryAddress}
+                onAddressChange={(field, value) => {
+                  dispatch({
+                    type: "SET_DELIVERY_ADDRESS",
+                    payload: { ...state.deliveryAddress, [field]: value },
+                  })
+                }}
+                onAddressComplete={handleAddressConfirmed}
+              />
+            )}
 
             {/* Step 2: Client */}
             {currentStep === 2 && endereco && <ClientForm onClientSaved={handleClientSaved} endereco={endereco} />}
@@ -247,31 +264,31 @@ export default function CartPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-cynthia-green-dark">
                   <ShoppingBag className="w-5 h-5" />
-                  Seu Pedido ({items.length} {items.length === 1 ? "item" : "itens"})
+                  Seu Pedido ({state.items.length} {state.items.length === 1 ? "item" : "itens"})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {items.map((item) => (
-                  <div key={`${item.productId}-${item.variacao}`} className="flex gap-3 p-3 bg-white/60 rounded-lg">
+                {state.items.map((item) => (
+                  <div key={`${item.product.id}-${item.variation.tamanho_ml}`} className="flex gap-3 p-3 bg-white/60 rounded-lg">
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
-                        src={getProductImage(item.productId) || "/placeholder.svg"}
-                        alt={item.productName}
+                        src={item.product.imagem_url || "/placeholder.svg"}
+                        alt={item.product.nome}
                         fill
                         className="object-cover"
                       />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-cynthia-green-dark text-sm line-clamp-1">{item.productName}</h3>
-                      <p className="text-xs text-gray-600">{item.variacao}</p>
-                      <p className="text-sm font-semibold text-cynthia-orange-pumpkin">{formatPrice(item.price)}</p>
+                      <h3 className="font-medium text-cynthia-green-dark text-sm line-clamp-1">{item.product.nome}</h3>
+                      <p className="text-xs text-gray-600">{item.variation.nome_tamanho}</p>
+                      <p className="text-sm font-semibold text-cynthia-orange-pumpkin">{formatPrice(item.variation.preco_centavos)}</p>
 
                       <div className="flex items-center gap-2 mt-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleQuantityChange(item.productId, item.variacao, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.product.id, item.variation.tamanho_ml, item.quantity - 1)}
                           className="h-6 w-6 p-0 border-cynthia-yellow-mustard"
                         >
                           <Minus className="w-3 h-3" />
@@ -280,7 +297,7 @@ export default function CartPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleQuantityChange(item.productId, item.variacao, item.quantity + 1)}
+                          onClick={() => handleQuantityChange(item.product.id, item.variation.tamanho_ml, item.quantity + 1)}
                           className="h-6 w-6 p-0 border-cynthia-yellow-mustard"
                         >
                           <Plus className="w-3 h-3" />
@@ -288,7 +305,7 @@ export default function CartPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleQuantityChange(item.productId, item.variacao, 0)}
+                          onClick={() => handleQuantityChange(item.product.id, item.variation.tamanho_ml, 0)}
                           className="h-6 w-6 p-0 border-red-300 text-red-500 hover:bg-red-50"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -303,7 +320,7 @@ export default function CartPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
-                    <span>{formatPrice(getTotalPrice())}</span>
+                    <span>{formatPrice(getSubtotal())}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Taxa de entrega:</span>
@@ -312,15 +329,15 @@ export default function CartPage() {
                   <Separator className="bg-cynthia-yellow-mustard/30" />
                   <div className="flex justify-between font-bold text-lg text-cynthia-green-dark">
                     <span>Total:</span>
-                    <span>{formatPrice(getTotalPrice())}</span>
+                    <span>{formatPrice(getSubtotal())}</span>
                   </div>
                 </div>
 
-                {getTotalPrice() < 3000 && (
+                {getSubtotal() < 3000 && (
                   <Alert className="border-cynthia-orange-pumpkin/30 bg-cynthia-orange-pumpkin/10">
-                    <AlertDescription className="text-cynthia-green-dark text-sm">
-                      Adicione mais {formatPrice(3000 - getTotalPrice())} para ganhar frete grátis! 🚚
-                    </AlertDescription>
+                                          <AlertDescription className="text-cynthia-green-dark text-sm">
+                        Adicione mais {formatPrice(3000 - getSubtotal())} para ganhar frete grátis! 🚚
+                      </AlertDescription>
                   </Alert>
                 )}
               </CardContent>
