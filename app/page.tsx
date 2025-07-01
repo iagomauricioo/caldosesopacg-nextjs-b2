@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { ProductCard } from "@/components/product-card"
+import { ProductCardSkeleton } from "@/components/product-card-skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -13,7 +14,6 @@ import { Footer } from "@/components/footer"
 import { MobileNavbar } from "@/components/mobile-navbar"
 import { FloatingLeaves } from "@/components/animations/floating-leaves"
 import { SoupBubbles } from "@/components/animations/soup-bubbles"
-import axios from "axios"
 
 // Mock data baseado na sua API
 const mockProducts: Product[] = [
@@ -90,7 +90,6 @@ const mockProducts: Product[] = [
     imagem_url: "/images/caldos/creme-de-abobora.jpeg",
   },
 ]
-
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -194,13 +193,13 @@ export default function HomePage() {
               variant={activeFilter === filter.key ? "default" : "outline"}
               onClick={() => setActiveFilter(filter.key)}
               className={`
-                whitespace-nowrap transition-all duration-300 hover:scale-105 animate-fade-in-up
-                ${
-                  activeFilter === filter.key
-                    ? "bg-cynthia-green-dark hover:bg-cynthia-green-dark/80 text-white"
-                    : "border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white"
-                }
-              `}
+              whitespace-nowrap transition-all duration-300 hover:scale-105 animate-fade-in-up
+              ${
+                activeFilter === filter.key
+                  ? "bg-cynthia-green-dark hover:bg-cynthia-green-dark/80 text-white"
+                  : "border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white"
+              }
+            `}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <span className="mr-2">{filter.icon}</span>
@@ -212,10 +211,8 @@ export default function HomePage() {
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {loading ? (
-            <div className="col-span-full text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-cynthia-green-dark"></div>
-              <p className="mt-4 text-cynthia-green-dark">Carregando produtos...</p>
-            </div>
+            // Mostrar skeletons durante carregamento
+            Array.from({ length: 6 }).map((_, index) => <ProductCardSkeleton key={index} />)
           ) : filteredProducts.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <p className="text-cynthia-green-dark">Nenhum produto encontrado.</p>

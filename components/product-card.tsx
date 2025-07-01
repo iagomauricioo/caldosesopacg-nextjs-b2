@@ -12,6 +12,7 @@ import type { Product, ProductVariation } from "@/types/product"
 import { useCart } from "@/contexts/cart-context"
 import { useToast } from "@/contexts/toast-context"
 import { useReviews } from "@/contexts/review-context"
+import { useProducts } from "@/hooks/use-products"
 
 interface ProductCardProps {
   product: Product
@@ -19,6 +20,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { dispatch } = useCart()
+  const { getProductImage } = useProducts()
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation>(product.variacoes[0])
   const [quantity, setQuantity] = useState(1)
   const { showToast } = useToast()
@@ -49,18 +51,6 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const incrementQuantity = () => setQuantity((prev) => prev + 1)
   const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1))
-
-  const getProductImage = (productId: number) => {
-    const imageMap: { [key: number]: string } = {
-      1: "/images/caldos/caldo-de-galinha.png",
-      2: "/images/caldos/caldo-de-kenga.png",
-      3: "/images/caldos/caldo-de-charque.jpeg",
-      4: "/images/caldos/caldo-de-feijao.png",
-      5: "/images/caldos/caldo-de-legumes.jpeg",
-      6: "/images/caldos/creme-de-abobora.jpeg",
-    }
-    return imageMap[productId] || product.imagem_url || "/placeholder.svg?height=200&width=300"
-  }
 
   return (
     <Card className="h-[580px] flex flex-col overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white border-cynthia-yellow-mustard/30 group">
