@@ -16,7 +16,7 @@ import { SoupBubbles } from "@/components/animations/soup-bubbles"
 import axios from "axios"
 
 // Mock data baseado na sua API
-/* const mockProducts: Product[] = [
+const mockProducts: Product[] = [
   {
     id: 1,
     nome: "Caldo de Frango",
@@ -27,7 +27,7 @@ import axios from "axios"
       { tamanho_ml: 500, nome_tamanho: "500ml", preco_centavos: 1700 },
       { tamanho_ml: 350, nome_tamanho: "350ml", preco_centavos: 1400 },
     ],
-    imagem_url: "/placeholder.svg?height=200&width=300",
+    imagem_url: "/images/caldos/caldo-de-galinha.png",
   },
   {
     id: 2,
@@ -39,57 +39,57 @@ import axios from "axios"
       { tamanho_ml: 500, nome_tamanho: "500ml", preco_centavos: 1800 },
       { tamanho_ml: 350, nome_tamanho: "350ml", preco_centavos: 1500 },
     ],
-    imagem_url: "/placeholder.svg?height=200&width=300",
+    imagem_url: "/images/caldos/caldo-de-kenga.png",
   },
   {
     id: 3,
-    nome: "Caldo de Camarão",
-    descricao: "Caldo cremoso de camarão",
+    nome: "Caldo de Charque",
+    descricao: "Caldo saboroso de charque",
     disponivel: true,
     ordem_exibicao: 3,
     variacoes: [
       { tamanho_ml: 500, nome_tamanho: "500ml", preco_centavos: 2000 },
       { tamanho_ml: 350, nome_tamanho: "350ml", preco_centavos: 1700 },
     ],
-    imagem_url: "/placeholder.svg?height=200&width=300",
+    imagem_url: "/images/caldos/caldo-de-charque.jpeg",
   },
   {
     id: 4,
-    nome: "Caldo de Charque",
-    descricao: "Caldo saboroso de charque",
+    nome: "Caldo de Feijão",
+    descricao: "Caldo tradicional de feijão",
     disponivel: true,
     ordem_exibicao: 4,
     variacoes: [
       { tamanho_ml: 500, nome_tamanho: "500ml", preco_centavos: 2000 },
       { tamanho_ml: 350, nome_tamanho: "350ml", preco_centavos: 1700 },
     ],
-    imagem_url: "/placeholder.svg?height=200&width=300",
+    imagem_url: "/images/caldos/caldo-de-feijao.png",
   },
   {
     id: 5,
-    nome: "Sopa de Feijão com Carne",
-    descricao: "Sopa nutritiva de feijão com carne",
+    nome: "Caldo de Legumes",
+    descricao: "Caldo vegetariano de legumes",
     disponivel: true,
-    ordem_exibicao: 1,
+    ordem_exibicao: 5,
     variacoes: [
-      { tamanho_ml: 900, nome_tamanho: "900ml", preco_centavos: 2000 },
-      { tamanho_ml: 700, nome_tamanho: "700ml", preco_centavos: 1600 },
+      { tamanho_ml: 500, nome_tamanho: "500ml", preco_centavos: 1800 },
+      { tamanho_ml: 350, nome_tamanho: "350ml", preco_centavos: 1500 },
     ],
-    imagem_url: "/placeholder.svg?height=200&width=300",
+    imagem_url: "/images/caldos/caldo-de-legumes.jpeg",
   },
   {
     id: 6,
-    nome: "Canja de Galinha",
-    descricao: "Canja tradicional de galinha",
+    nome: "Creme de Abóbora",
+    descricao: "Creme cremoso de abóbora",
     disponivel: true,
-    ordem_exibicao: 1,
+    ordem_exibicao: 6,
     variacoes: [
-      { tamanho_ml: 900, nome_tamanho: "900ml", preco_centavos: 1800 },
-      { tamanho_ml: 700, nome_tamanho: "700ml", preco_centavos: 1400 },
+      { tamanho_ml: 500, nome_tamanho: "500ml", preco_centavos: 1900 },
+      { tamanho_ml: 350, nome_tamanho: "350ml", preco_centavos: 1600 },
     ],
-    imagem_url: "/placeholder.svg?height=200&width=300",
+    imagem_url: "/images/caldos/creme-de-abobora.jpeg",
   },
-] */
+]
 
 
 export default function HomePage() {
@@ -101,12 +101,15 @@ export default function HomePage() {
     const fetchProducts = async () => {
       try {
         const response = await fetch("http://localhost:8080/api/v1/produtos")
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
         const data = await response.json()
         setProducts(data)
       } catch (error) {
-        console.error("Erro ao carregar produtos:", error)
+        console.error("Erro ao carregar produtos da API, usando dados mockados:", error)
         // Fallback para dados mock em caso de erro
-        setProducts([])
+        setProducts(mockProducts)
       } finally {
         setLoading(false)
       }
