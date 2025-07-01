@@ -77,7 +77,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
     const numbers = value.replace(/\D/g, "")
     return numbers.replace(/(\d{5})(\d{3})/, "$1-$2")
   }
-
+  //teste
   const handleTelefoneChange = (value: string) => {
     const formatted = formatPhone(value)
     setTelefone(formatted)
