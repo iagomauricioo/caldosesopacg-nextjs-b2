@@ -54,17 +54,17 @@ export function ProductCard({ product }: ProductCardProps) {
     const imageMap: { [key: number]: string } = {
       1: "/images/caldos/caldo-de-galinha.png",
       2: "/images/caldos/caldo-de-kenga.png",
-      3: "/images/caldos/caldo-de-legumes.jpeg",
-      4: "/images/caldos/caldo-de-charque.jpeg",
-      5: "/images/caldos/caldo-de-feijao.png",
-      6: "/images/caldos/caldo-de-galinha.png",
+      3: "/images/caldos/caldo-de-charque.jpeg",
+      4: "/images/caldos/caldo-de-feijao.png",
+      5: "/images/caldos/caldo-de-legumes.jpeg",
+      6: "/images/caldos/creme-de-abobora.jpeg",
     }
-    return imageMap[productId] || "/placeholder.svg?height=200&width=300"
+    return imageMap[productId] || product.imagem_url || "/placeholder.svg?height=200&width=300"
   }
 
   return (
-    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white border-cynthia-yellow-mustard/30 group">
-      <CardHeader className="p-0">
+    <Card className="h-[580px] flex flex-col overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white border-cynthia-yellow-mustard/30 group">
+      <CardHeader className="p-0 flex-shrink-0">
         <div className="relative h-48 overflow-hidden">
           <Image
             src={getProductImage(product.id) || "/placeholder.svg"}
@@ -79,22 +79,22 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-lg text-cynthia-green-dark">{product.nome}</h3>
+          <h3 className="font-semibold text-lg text-cynthia-green-dark line-clamp-2 flex-1 mr-2">{product.nome}</h3>
           <Badge
             variant="outline"
-            className="border-cynthia-orange-pumpkin text-cynthia-orange-pumpkin bg-white font-semibold"
+            className="border-cynthia-orange-pumpkin text-cynthia-orange-pumpkin bg-white font-semibold flex-shrink-0"
           >
             {formatPrice(selectedVariation.preco_centavos)}
           </Badge>
         </div>
 
-        <p className="text-gray-700 text-sm mb-4">{product.descricao}</p>
+        <p className="text-gray-700 text-sm mb-4 line-clamp-2 flex-shrink-0">{product.descricao}</p>
 
         {stats.totalReviews > 0 && (
           <>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4 flex-shrink-0">
               <div className="flex items-center">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
@@ -109,12 +109,12 @@ export function ProductCard({ product }: ProductCardProps) {
                 {stats.averageRating.toFixed(1)} ({stats.totalReviews} avaliações)
               </span>
             </div>
-            <Separator className="mb-4 bg-cynthia-yellow-mustard/30" />
+            <Separator className="mb-4 bg-cynthia-yellow-mustard/30 flex-shrink-0" />
           </>
         )}
 
-        <div className="space-y-4">
-          <div>
+        <div className="space-y-4 flex-1 flex flex-col justify-end">
+          <div className="flex-shrink-0">
             <label className="text-sm font-medium mb-2 block text-cynthia-green-dark">Tamanho:</label>
             <Select
               value={selectedVariation.nome_tamanho}
@@ -140,7 +140,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </Select>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center flex-shrink-0">
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
@@ -169,7 +169,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-0 flex-shrink-0">
         <Button
           onClick={handleAddToCart}
           disabled={!product.disponivel || isLoading}

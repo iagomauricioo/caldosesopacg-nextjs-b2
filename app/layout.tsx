@@ -11,6 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Caldos da Cynthia",
   description: "Caldos artesanais feitos com amor",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
