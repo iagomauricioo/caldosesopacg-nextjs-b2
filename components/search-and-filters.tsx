@@ -132,49 +132,6 @@ export function SearchAndFilters({ products, onFilteredProducts }: SearchAndFilt
           </SelectContent>
         </Select>
       </div>
-
-      {/* Faixa de Preço */}
-      <div>
-        <label className="text-sm font-medium text-cynthia-green-dark mb-2 block">
-          Faixa de Preço: R$ {priceRange[0]} - R$ {priceRange[1]}
-        </label>
-        <Slider
-          value={priceRange}
-          onValueChange={setPriceRange}
-          max={maxPrice}
-          min={minPrice}
-          step={1}
-          className="mt-2"
-        />
-      </div>
-
-      {/* Ordenação */}
-      <div>
-        <label className="text-sm font-medium text-cynthia-green-dark mb-2 block">Ordenar por</label>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="border-cynthia-yellow-mustard/50 focus:border-cynthia-green-dark">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="popularity">Popularidade</SelectItem>
-            <SelectItem value="name">Nome A-Z</SelectItem>
-            <SelectItem value="price-low">Menor Preço</SelectItem>
-            <SelectItem value="price-high">Maior Preço</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Limpar Filtros */}
-      {hasActiveFilters && (
-        <Button
-          variant="outline"
-          onClick={clearFilters}
-          className="w-full border-cynthia-orange-pumpkin text-cynthia-orange-pumpkin hover:bg-cynthia-orange-pumpkin hover:text-white bg-transparent"
-        >
-          <X className="w-4 h-4 mr-2" />
-          Limpar Filtros
-        </Button>
-      )}
     </div>
   )
 
@@ -198,8 +155,7 @@ export function SearchAndFilters({ products, onFilteredProducts }: SearchAndFilt
           {[
             { key: "todos", label: "Todos", icon: "🍽️" },
             { key: "caldos", label: "Caldos", icon: "🍲" },
-            { key: "cremes", label: "Cremes", icon: "🥄" },
-            { key: "sopas", label: "Sopas", icon: "🍜" },
+            { key: "sopas", label: "Sopa", icon: "🍜" },
           ].map((filter) => (
             <Button
               key={filter.key}
@@ -220,85 +176,6 @@ export function SearchAndFilters({ products, onFilteredProducts }: SearchAndFilt
             </Button>
           ))}
         </div>
-
-        {/* Filtros Avançados (Mobile) */}
-        <div className="md:hidden">
-          <Sheet open={showFilters} onOpenChange={setShowFilters}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="border-cynthia-yellow-mustard/50 bg-transparent">
-                <SlidersHorizontal className="w-4 h-4 mr-2" />
-                Filtros
-                {hasActiveFilters && <Badge className="ml-2 bg-cynthia-orange-pumpkin text-white text-xs">!</Badge>}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-80">
-              <SheetHeader>
-                <SheetTitle className="text-cynthia-green-dark">Filtros</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6">
-                <FilterContent />
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-
-      {/* Filtros Avançados (Desktop) */}
-      <div className="hidden md:block">
-        <Card className="border-cynthia-yellow-mustard/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-cynthia-green-dark flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              Filtros Avançados
-              {hasActiveFilters && <Badge className="bg-cynthia-orange-pumpkin text-white">Ativos</Badge>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-cynthia-green-dark mb-2 block">
-                  Faixa de Preço: R$ {priceRange[0]} - R$ {priceRange[1]}
-                </label>
-                <Slider
-                  value={priceRange}
-                  onValueChange={setPriceRange}
-                  max={maxPrice}
-                  min={minPrice}
-                  step={1}
-                  className="mt-2"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-cynthia-green-dark mb-2 block">Ordenar por</label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="border-cynthia-yellow-mustard/50 focus:border-cynthia-green-dark">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popularity">Popularidade</SelectItem>
-                    <SelectItem value="name">Nome A-Z</SelectItem>
-                    <SelectItem value="price-low">Menor Preço</SelectItem>
-                    <SelectItem value="price-high">Maior Preço</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-end">
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="w-full border-cynthia-orange-pumpkin text-cynthia-orange-pumpkin hover:bg-cynthia-orange-pumpkin hover:text-white bg-transparent"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Limpar
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Resultados */}

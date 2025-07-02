@@ -147,10 +147,14 @@ export default function CartPage() {
                   <div key={`${item.product.id}-${item.variation.tamanho_ml}`} className="flex items-center gap-3 p-3 bg-cynthia-cream/30 rounded-lg">
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-white">
                       <Image
-                        src={item.product.imagem_url || "/placeholder.svg"}
+                        src={getProductImage(item.product.id)}
                         alt={item.product.nome}
                         fill
                         className="object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = "/placeholder.svg"
+                        }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">

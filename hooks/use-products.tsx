@@ -117,6 +117,15 @@ export function useProducts() {
   const getProductImage = (productId: number): string => {
     const product = getProductById(productId)
     if (product?.imagem_url) {
+      // Se a URL é relativa (começa com /), manter como está
+      if (product.imagem_url.startsWith('/')) {
+        return product.imagem_url
+      }
+      // Se é uma URL externa, usar diretamente
+      if (product.imagem_url.startsWith('http')) {
+        return product.imagem_url
+      }
+      // Se não tem protocolo, assumir que é relativa
       return product.imagem_url
     }
 
