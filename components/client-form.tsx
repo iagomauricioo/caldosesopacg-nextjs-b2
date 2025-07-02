@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, User, MapPin, Phone, CheckCircle, AlertTriangle } from "lucide-react"
+import { CepSearch } from "@/components/cep-search"
 import type { ClientFormData, ClientResponse } from "@/types/client"
+import type { DeliveryAddress } from "@/types/product"
 
 // Tipo para a resposta real da API de endereço
 interface EnderecoResponse {
@@ -44,21 +46,13 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
     },
   })
 
-  // Log inicial do formData
-  console.log("Estado inicial do formData:", formData)
-
-  // Monitorar mudanças no formData
-  useEffect(() => {
-    console.log("formData atualizado:", formData)
-    console.log("formData.endereco:", formData.endereco)
-  }, [formData])
-
   const [isLoadingClient, setIsLoadingClient] = useState(false)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
   const [isCreatingClient, setIsCreatingClient] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [clientFound, setClientFound] = useState(false)
+  const [addressComplete, setAddressComplete] = useState(false)
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, "")
@@ -73,11 +67,6 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
     return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
   }
 
-  const formatCEP = (value: string) => {
-    const numbers = value.replace(/\D/g, "")
-    return numbers.replace(/(\d{5})(\d{3})/, "$1-$2")
-  }
-  //teste
   const handleTelefoneChange = (value: string) => {
     const formatted = formatPhone(value)
     setTelefone(formatted)
@@ -105,13 +94,23 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         cep: "",
       },
     })
+    setAddressComplete(false)
   }
 
   const searchClient = async () => {
     console.log("searchClient chamada com telefone:", telefone)
-    limparFormulario()
     const cleanPhone = telefone.replace(/\D/g, "")
     console.log("Telefone limpo:", cleanPhone)
+    
+    // Limpar apenas os dados do cliente, não o telefone
+    setClientData(null)
+    setEndereco(null)
+    setFormData((prev) => ({
+      ...prev,
+      nome: "",
+      cpf: "",
+      telefone: formatPhone(cleanPhone),
+    }))
 
     setIsLoadingClient(true)
     setError(null)
@@ -138,12 +137,17 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         console.log("Chamando searchClientAddress para:", cleanPhone)
         await searchClientAddress(cleanPhone)
       } else {
+        console.log("Cliente não encontrado (404), configurando para exibir formulário...")
         setClientFound(false)
-        setSuccess("Cliente não encontrado. Preencha os dados para cadastrar.")
+        setSuccess("Cliente não encontrado. Preencha os dados abaixo para cadastrar.")
         setFormData((prev) => ({
           ...prev,
-          telefone: cleanPhone,
+          telefone: formatPhone(cleanPhone),
         }))
+        console.log("Estado após cliente não encontrado:", {
+          clientFound: false,
+          telefone: formatPhone(cleanPhone)
+        })
       }
     } catch (err) {
       setError("Erro ao buscar cliente")
@@ -193,7 +197,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
             numero: enderecoData.numero || "",
             bairro: enderecoData.bairro || "",
             pontoReferencia: enderecoData.pontoReferencia || "",
-            cep: formatCEP(enderecoData.cep || ""),
+            cep: enderecoData.cep || "",
           }
           
           console.log("Dados do endereço a serem preenchidos:", formEnderecoData)
@@ -224,8 +228,6 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
   const handleInputChange = (field: string, value: string) => {
     if (field === "cpf") {
       value = formatCPF(value)
-    } else if (field === "endereco.cep") {
-      value = formatCEP(value)
     }
 
     if (field.includes(".")) {
@@ -243,6 +245,31 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         [field]: value,
       }))
     }
+  }
+
+  const handleAddressChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      endereco: {
+        ...prev.endereco,
+        [field]: value,
+      },
+    }))
+  }
+
+  const handleAddressComplete = (address: DeliveryAddress) => {
+    setFormData((prev) => ({
+      ...prev,
+      endereco: {
+        ...prev.endereco,
+        rua: address.rua,
+        bairro: address.bairro,
+        numero: address.numero,
+        complemento: address.complemento,
+        cep: address.cep,
+      },
+    }))
+    setAddressComplete(true)
   }
 
   const createClient = async () => {
@@ -263,6 +290,8 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
           cep: (formData.endereco?.cep || "").replace(/\D/g, ""),
         },
       }
+
+      console.log("Payload para criar cliente:", clientPayload)
 
       const response = await fetch("http://localhost:8080/api/v1/clientes", {
         method: "POST",
@@ -375,7 +404,18 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         )}
 
         {/* Formulário de Dados */}
-        {(clientFound || (!clientFound && telefone.replace(/\D/g, "").length === 11)) && (
+        {(() => {
+          const telefoneLength = telefone.replace(/\D/g, "").length
+          const shouldShow = (!isLoadingClient && (clientFound || (!clientFound && telefoneLength === 11)))
+          console.log("Condição de exibição:", {
+            isLoadingClient,
+            clientFound,
+            telefone,
+            telefoneLength,
+            shouldShow
+          })
+          return shouldShow
+        })() && (
           <div className="space-y-4">
             {/* Dados Pessoais */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -411,81 +451,58 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
                 Endereço de Entrega
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                  <Label htmlFor="rua">Rua *</Label>
-                  <Input
-                    id="rua"
-                    value={formData.endereco?.rua || ""}
-                    onChange={(e) => handleInputChange("endereco.rua", e.target.value)}
-                    placeholder="Nome da rua"
-                    className={endereco ? "bg-gray-50" : ""}
-                    readOnly={!!endereco}
-                  />
+              {!endereco ? (
+                <CepSearch
+                  address={{
+                    cep: formData.endereco?.cep || "",
+                    rua: formData.endereco?.rua || "",
+                    numero: formData.endereco?.numero || "",
+                    bairro: formData.endereco?.bairro || "",
+                    complemento: formData.endereco?.complemento || "",
+                  }}
+                  onAddressChange={handleAddressChange}
+                  onAddressComplete={handleAddressComplete}
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="rua">Rua *</Label>
+                    <Input
+                      id="rua"
+                      value={formData.endereco?.rua || ""}
+                      onChange={(e) => handleInputChange("endereco.rua", e.target.value)}
+                      placeholder="Nome da rua"
+                      className="bg-gray-50"
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="numero">Número *</Label>
+                    <Input
+                      id="numero"
+                      value={formData.endereco?.numero || ""}
+                      onChange={(e) => handleInputChange("endereco.numero", e.target.value)}
+                      placeholder="123"
+                      className="bg-gray-50"
+                      readOnly
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="numero">Número *</Label>
-                  <Input
-                    id="numero"
-                    value={formData.endereco?.numero || ""}
-                    onChange={(e) => handleInputChange("endereco.numero", e.target.value)}
-                    placeholder="123"
-                    className={endereco ? "bg-gray-50" : ""}
-                    readOnly={!!endereco}
-                  />
-                </div>
-              </div>
+              )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="bairro">Bairro *</Label>
-                  <Input
-                    id="bairro"
-                    value={formData.endereco?.bairro || ""}
-                    onChange={(e) => handleInputChange("endereco.bairro", e.target.value)}
-                    placeholder="Nome do bairro"
-                    className={endereco ? "bg-gray-50" : ""}
-                    readOnly={!!endereco}
-                  />
+              {(!endereco && addressComplete) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="pontoReferencia">Ponto de Referência</Label>
+                    <Input
+                      id="pontoReferencia"
+                      value={formData.endereco?.pontoReferencia || ""}
+                      onChange={(e) => handleInputChange("endereco.pontoReferencia", e.target.value)}
+                      placeholder="Próximo ao..."
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="cep">CEP *</Label>
-                  <Input
-                    id="cep"
-                    value={formData.endereco?.cep || ""}
-                    onChange={(e) => handleInputChange("endereco.cep", e.target.value)}
-                    placeholder="00000-000"
-                    maxLength={9}
-                    className={endereco ? "bg-gray-50" : ""}
-                    readOnly={!!endereco}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="complemento">Complemento</Label>
-                  <Input
-                    id="complemento"
-                    value={formData.endereco?.complemento || ""}
-                    onChange={(e) => handleInputChange("endereco.complemento", e.target.value)}
-                    placeholder="Apto, casa, etc."
-                    className={endereco ? "bg-gray-50" : ""}
-                    readOnly={!!endereco}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pontoReferencia">Ponto de Referência</Label>
-                  <Input
-                    id="pontoReferencia"
-                    value={formData.endereco?.pontoReferencia || ""}
-                    onChange={(e) => handleInputChange("endereco.pontoReferencia", e.target.value)}
-                    placeholder="Próximo ao..."
-                    className={endereco ? "bg-gray-50" : ""}
-                    readOnly={!!endereco}
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Botão de Confirmação */}
