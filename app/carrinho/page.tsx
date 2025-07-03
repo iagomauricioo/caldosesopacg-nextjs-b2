@@ -10,18 +10,9 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  ShoppingCart,
-  Minus,
-  Plus,
-  Trash2,
-  User,
-  CreditCard,
-  CheckCircle,
-  ArrowLeft,
-  ArrowRight,
-} from "lucide-react"
+import { ShoppingCart, Minus, Plus, Trash2, User, CreditCard, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react"
 import { ClientForm } from "@/components/client-form"
+import { PaymentForm } from "@/components/payment-form"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -41,8 +32,6 @@ export default function CartPage() {
 
   const currentStepIndex = steps.findIndex((step) => step.id === currentStep)
   const progress = ((currentStepIndex + 1) / steps.length) * 100
-
-
 
   const handleClientSaved = (id: string) => {
     setClientId(id)
@@ -144,10 +133,13 @@ export default function CartPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {state.items.map((item) => (
-                  <div key={`${item.product.id}-${item.variation.tamanho_ml}`} className="flex items-center gap-3 p-3 bg-cynthia-cream/30 rounded-lg">
+                  <div
+                    key={`${item.product.id}-${item.variation.tamanho_ml}`}
+                    className="flex items-center gap-3 p-3 bg-cynthia-cream/30 rounded-lg"
+                  >
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-white">
                       <Image
-                        src={getProductImage(item.product.id)}
+                        src={getProductImage(item.product.id) || "/placeholder.svg"}
                         alt={item.product.nome}
                         fill
                         className="object-cover"
@@ -173,7 +165,11 @@ export default function CartPage() {
                             } else {
                               dispatch({
                                 type: "UPDATE_QUANTITY",
-                                payload: { productId: item.product.id, variationSize: item.variation.tamanho_ml, quantity: item.quantity - 1 },
+                                payload: {
+                                  productId: item.product.id,
+                                  variationSize: item.variation.tamanho_ml,
+                                  quantity: item.quantity - 1,
+                                },
                               })
                             }
                           }}
@@ -190,7 +186,11 @@ export default function CartPage() {
                           onClick={() => {
                             dispatch({
                               type: "UPDATE_QUANTITY",
-                              payload: { productId: item.product.id, variationSize: item.variation.tamanho_ml, quantity: item.quantity + 1 },
+                              payload: {
+                                productId: item.product.id,
+                                variationSize: item.variation.tamanho_ml,
+                                quantity: item.quantity + 1,
+                              },
                             })
                           }}
                           className="h-6 w-6 p-0 border-cynthia-yellow-mustard/50"
@@ -234,7 +234,7 @@ export default function CartPage() {
                   <Separator />
                   <div className="flex justify-between text-lg font-bold text-cynthia-green-dark">
                     <span>Total:</span>
-                    <span>R$ {((getSubtotal() / 100) + 5).toFixed(2)}</span>
+                    <span>R$ {(getSubtotal() / 100 + 5).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -269,32 +269,24 @@ export default function CartPage() {
                 })}
               </TabsList>
 
-
-
               <TabsContent value="client" className="space-y-6">
                 <ClientForm onClientSaved={handleClientSaved} />
               </TabsContent>
 
               <TabsContent value="payment" className="space-y-6">
-                <Card className="border-cynthia-yellow-mustard/30">
-                  <CardHeader>
-                    <CardTitle className="text-cynthia-green-dark flex items-center gap-2">
-                      <CreditCard className="w-5 h-5" />
-                      Forma de Pagamento
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-cynthia-green-dark/70 mb-4">
-                      Selecione a forma de pagamento (PIX, Dinheiro, etc.)
-                    </p>
-                    <Button
-                      onClick={handlePaymentComplete}
-                      className="bg-cynthia-green-dark hover:bg-cynthia-green-dark/80"
-                    >
-                      Confirmar Pagamento
-                    </Button>
-                  </CardContent>
-                </Card>
+                {clientId ? (
+                  <PaymentForm
+                    clientId={clientId}
+                    totalAmount={getSubtotal() / 100 + 5}
+                    onPaymentComplete={handlePaymentComplete}
+                  />
+                ) : (
+                  <Alert className="border-yellow-400 bg-yellow-50">
+                    <AlertDescription className="text-yellow-800 font-medium">
+                      Complete os dados do cliente primeiro para prosseguir com o pagamento.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </TabsContent>
 
               <TabsContent value="confirmation" className="space-y-6">
