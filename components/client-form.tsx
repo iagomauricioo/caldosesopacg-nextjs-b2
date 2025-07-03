@@ -127,7 +127,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         console.log("Dados do cliente encontrado:", data.data)
         setClientData(data.data)
         setClientFound(true)
-        setSuccess(`Cliente encontrado: ${data.data.nome}`)
+        setSuccess(`Cliente encontrado! Prosseguindo com ${data.data.nome}...`)
 
         // Preencher dados do formulário
         setFormData((prev) => ({
@@ -143,7 +143,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
       } else {
         console.log("Cliente não encontrado (404), configurando para exibir formulário...")
         setClientFound(false)
-        setSuccess("Cliente não encontrado. Preencha os dados abaixo para cadastrar.")
+        setSuccess("Cliente não encontrado. Preencha seus dados para continuar.")
         setFormData((prev) => ({
           ...prev,
           telefone: formatPhone(cleanPhone),
@@ -311,11 +311,11 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
 
       const data: ClientResponse = await response.json()
 
-      // Marcar que um novo cliente foi criado
-      setNewClientCreated(true)
-      setSuccess(
-        `🎉 Parabéns ${formData.nome}! Você foi cadastrado com sucesso em nosso sistema! Agora você pode finalizar seu pedido.`,
-      )
+              // Marcar que um novo cliente foi criado
+        setNewClientCreated(true)
+        setSuccess(
+          `🎉 Perfeito ${formData.nome}! Seus dados foram confirmados. Prosseguindo para o próximo passo...`,
+        )
 
       // Aguardar um pouco para mostrar a mensagem antes de prosseguir
       setTimeout(() => {
@@ -589,22 +589,17 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
               {isCreatingClient ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Cadastrando Cliente...
+                  Processando...
                 </>
               ) : newClientCreated ? (
                 <>
                   <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                  Cliente Cadastrado! Redirecionando...
-                </>
-              ) : clientFound ? (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Confirmar Cliente Existente
+                  Redirecionando...
                 </>
               ) : (
                 <>
-                  <User className="w-4 h-4 mr-2" />
-                  Cadastrar Novo Cliente
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Próximo
                 </>
               )}
             </Button>
