@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, User, MapPin, Phone, CheckCircle, AlertTriangle } from "lucide-react"
+import { Loader2, User, MapPin, Phone, CheckCircle, AlertTriangle, PartyPopper } from "lucide-react"
 import { CepSearch } from "@/components/cep-search"
 import type { ClientFormData, ClientResponse } from "@/types/client"
 import type { DeliveryAddress } from "@/types/product"
@@ -53,6 +53,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
   const [success, setSuccess] = useState<string | null>(null)
   const [clientFound, setClientFound] = useState(false)
   const [addressComplete, setAddressComplete] = useState(false)
+  const [newClientCreated, setNewClientCreated] = useState(false)
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, "")
@@ -75,6 +76,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
     setClientFound(false)
     setClientData(null)
     setEndereco(null)
+    setNewClientCreated(false)
   }
 
   const limparFormulario = () => {
@@ -95,16 +97,18 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
       },
     })
     setAddressComplete(false)
+    setNewClientCreated(false)
   }
 
   const searchClient = async () => {
     console.log("searchClient chamada com telefone:", telefone)
     const cleanPhone = telefone.replace(/\D/g, "")
     console.log("Telefone limpo:", cleanPhone)
-    
+
     // Limpar apenas os dados do cliente, não o telefone
     setClientData(null)
     setEndereco(null)
+    setNewClientCreated(false)
     setFormData((prev) => ({
       ...prev,
       nome: "",
@@ -146,7 +150,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         }))
         console.log("Estado após cliente não encontrado:", {
           clientFound: false,
-          telefone: formatPhone(cleanPhone)
+          telefone: formatPhone(cleanPhone),
         })
       }
     } catch (err) {
@@ -161,7 +165,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
   useEffect(() => {
     const cleanPhone = telefone.replace(/\D/g, "")
     console.log("useEffect - Telefone:", cleanPhone, "Tamanho:", cleanPhone.length)
-    
+
     if (cleanPhone.length === 11) {
       console.log("useEffect - Telefone completo, agendando busca...")
       const timeoutId = setTimeout(() => {
@@ -185,7 +189,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
       if (response.ok) {
         const enderecoData = await response.json()
         console.log("Resposta da API de endereço:", enderecoData)
-        
+
         if (enderecoData) {
           console.log("Estrutura do endereço:", JSON.stringify(enderecoData, null, 2))
           setEndereco(enderecoData)
@@ -199,9 +203,9 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
             pontoReferencia: enderecoData.pontoReferencia || "",
             cep: enderecoData.cep || "",
           }
-          
+
           console.log("Dados do endereço a serem preenchidos:", formEnderecoData)
-          
+
           setFormData((prev) => {
             const newData = {
               ...prev,
@@ -306,8 +310,17 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
       }
 
       const data: ClientResponse = await response.json()
-      setSuccess("Cliente cadastrado com sucesso!")
-      onClientSaved(data.data.clienteId)
+
+      // Marcar que um novo cliente foi criado
+      setNewClientCreated(true)
+      setSuccess(
+        `🎉 Parabéns ${formData.nome}! Você foi cadastrado com sucesso em nosso sistema! Agora você pode finalizar seu pedido.`,
+      )
+
+      // Aguardar um pouco para mostrar a mensagem antes de prosseguir
+      setTimeout(() => {
+        onClientSaved(data.data.clienteId)
+      }, 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar cliente")
     } finally {
@@ -387,9 +400,19 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         )}
 
         {success && (
-          <Alert className="border-cynthia-green-leaf bg-cynthia-green-leaf/10">
-            <CheckCircle className="h-4 w-4 text-cynthia-green-leaf" />
-            <AlertDescription className="text-cynthia-green-dark font-medium">{success}</AlertDescription>
+          <Alert
+            className={`${newClientCreated ? "border-green-400 bg-green-50" : "border-cynthia-green-leaf bg-cynthia-green-leaf/10"}`}
+          >
+            {newClientCreated ? (
+              <PartyPopper className="h-4 w-4 text-green-600" />
+            ) : (
+              <CheckCircle className="h-4 w-4 text-cynthia-green-leaf" />
+            )}
+            <AlertDescription
+              className={`${newClientCreated ? "text-green-800" : "text-cynthia-green-dark"} font-medium`}
+            >
+              {success}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -406,13 +429,13 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
         {/* Formulário de Dados */}
         {(() => {
           const telefoneLength = telefone.replace(/\D/g, "").length
-          const shouldShow = (!isLoadingClient && (clientFound || (!clientFound && telefoneLength === 11)))
+          const shouldShow = !isLoadingClient && (clientFound || (!clientFound && telefoneLength === 11))
           console.log("Condição de exibição:", {
             isLoadingClient,
             clientFound,
             telefone,
             telefoneLength,
-            shouldShow
+            shouldShow,
           })
           return shouldShow
         })() && (
@@ -489,7 +512,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="bairro">Bairro *</Label>
@@ -514,7 +537,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="complemento">Complemento</Label>
@@ -542,7 +565,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
                 </div>
               )}
 
-              {(!endereco && addressComplete) && (
+              {!endereco && addressComplete && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="pontoReferencia">Ponto de Referência</Label>
@@ -560,13 +583,18 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
             {/* Botão de Confirmação */}
             <Button
               onClick={handleSubmit}
-              disabled={!isFormValid() || isCreatingClient}
+              disabled={!isFormValid() || isCreatingClient || newClientCreated}
               className="w-full bg-cynthia-green-dark hover:bg-cynthia-green-dark/80"
             >
               {isCreatingClient ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Cadastrando Cliente...
+                </>
+              ) : newClientCreated ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                  Cliente Cadastrado! Redirecionando...
                 </>
               ) : clientFound ? (
                 <>
