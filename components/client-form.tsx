@@ -464,28 +464,80 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
                   onAddressComplete={handleAddressComplete}
                 />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
-                    <Label htmlFor="rua">Rua *</Label>
-                    <Input
-                      id="rua"
-                      value={formData.endereco?.rua || ""}
-                      onChange={(e) => handleInputChange("endereco.rua", e.target.value)}
-                      placeholder="Nome da rua"
-                      className="bg-gray-50"
-                      readOnly
-                    />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="rua">Rua *</Label>
+                      <Input
+                        id="rua"
+                        value={formData.endereco?.rua || ""}
+                        onChange={(e) => handleInputChange("endereco.rua", e.target.value)}
+                        placeholder="Nome da rua"
+                        className="bg-gray-50"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="numero">Número *</Label>
+                      <Input
+                        id="numero"
+                        value={formData.endereco?.numero || ""}
+                        onChange={(e) => handleInputChange("endereco.numero", e.target.value)}
+                        placeholder="123"
+                        className="bg-gray-50"
+                        readOnly
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="numero">Número *</Label>
-                    <Input
-                      id="numero"
-                      value={formData.endereco?.numero || ""}
-                      onChange={(e) => handleInputChange("endereco.numero", e.target.value)}
-                      placeholder="123"
-                      className="bg-gray-50"
-                      readOnly
-                    />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="bairro">Bairro *</Label>
+                      <Input
+                        id="bairro"
+                        value={formData.endereco?.bairro || ""}
+                        onChange={(e) => handleInputChange("endereco.bairro", e.target.value)}
+                        placeholder="Nome do bairro"
+                        className="bg-gray-50"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cep">CEP *</Label>
+                      <Input
+                        id="cep"
+                        value={formData.endereco?.cep || ""}
+                        onChange={(e) => handleInputChange("endereco.cep", e.target.value)}
+                        placeholder="00000-000"
+                        className="bg-gray-50"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="complemento">Complemento</Label>
+                      <Input
+                        id="complemento"
+                        value={formData.endereco?.complemento || ""}
+                        onChange={(e) => handleInputChange("endereco.complemento", e.target.value)}
+                        placeholder="Apartamento, bloco, etc."
+                        className="bg-gray-50"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pontoReferencia">Ponto de Referência</Label>
+                      <Input
+                        id="pontoReferencia"
+                        value={formData.endereco?.pontoReferencia || ""}
+                        onChange={(e) => handleInputChange("endereco.pontoReferencia", e.target.value)}
+                        placeholder="Próximo ao..."
+                        className="bg-gray-50"
+                        readOnly
+                      />
+                    </div>
                   </div>
                 </div>
               )}
