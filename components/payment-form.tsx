@@ -133,7 +133,7 @@ export function PaymentForm({ clientId, totalAmount, onPaymentComplete }: Paymen
 
   const getPixQRCode = async (paymentId: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/cobranca/${paymentId}/qrcode`)
+      const response = await fetch(`http://localhost:8080/api/v1/cobranca/pixQrCode/${paymentId}`)
 
       if (!response.ok) {
         throw new Error("Erro ao gerar QR Code PIX")

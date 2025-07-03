@@ -38,16 +38,10 @@ export function Header() {
               Início
             </Link>
             <Link
-              href="/cardapio"
+              href="#cardapio"
               className="text-white hover:text-cynthia-yellow-mustard transition-colors duration-300 hover:scale-105 transform font-medium"
             >
               Cardápio
-            </Link>
-            <Link
-              href="/pedidos"
-              className="text-white hover:text-cynthia-yellow-mustard transition-colors duration-300 hover:scale-105 transform font-medium"
-            >
-              Pedidos
             </Link>
             <Link
               href="/carrinho"
