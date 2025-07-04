@@ -13,7 +13,7 @@ export function MobileNavbar() {
     const whatsappUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, "_blank")
   }
-
+//teste
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 md:hidden">
       <div className="bg-gradient-to-r from-cynthia-green to-cynthia-green-light rounded-full px-6 py-3 shadow-xl border-2 border-cynthia-cream/20">
