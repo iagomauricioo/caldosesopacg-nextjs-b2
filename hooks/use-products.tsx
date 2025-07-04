@@ -90,7 +90,7 @@ export function useProducts() {
         setIsLoading(true)
         setError(null)
 
-        const response = await fetch("http://localhost:8080/api/v1/produtos")
+        const response = await fetch("https://api.caldosesopacg.com/api/v1/produtos")
 
         if (!response.ok) {
           throw new Error(`Erro na API: ${response.status}`)

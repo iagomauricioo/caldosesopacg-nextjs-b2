@@ -120,7 +120,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
     setError(null)
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/clientes/${cleanPhone}`)
+      const response = await fetch(`https://api.caldosesopacg.com/api/v1/clientes/${cleanPhone}`)
 
       if (response.ok) {
         const data: ClientResponse = await response.json()
@@ -184,7 +184,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
     setIsLoadingAddress(true)
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/clientes/${telefone}/endereco`)
+      const response = await fetch(`https://api.caldosesopacg.com/api/v1/clientes/${telefone}/endereco`)
 
       if (response.ok) {
         const enderecoData = await response.json()
@@ -297,7 +297,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
 
       console.log("Payload para criar cliente:", clientPayload)
 
-      const response = await fetch("http://localhost:8080/api/v1/clientes", {
+      const response = await fetch("https://api.caldosesopacg.com/api/v1/clientes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

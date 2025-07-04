@@ -53,7 +53,7 @@ export function CepSearch({ address, onAddressChange, onAddressComplete }: CepSe
     setError(null)
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/cep/${cleanCep}`)
+      const response = await fetch(`https://api.caldosesopacg.com/api/v1/cep/${cleanCep}`)
 
       if (!response.ok) {
         throw new Error("CEP não encontrado")

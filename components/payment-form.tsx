@@ -70,7 +70,7 @@ export function PaymentForm({ clientId, totalAmount, onPaymentComplete }: Paymen
 
   const getAsaasCustomer = async (): Promise<AsaasCustomer | null> => {
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/clientes/asaas/${clientId}`)
+      const response = await fetch(`https://api.caldosesopacg.com/api/v1/clientes/asaas/${clientId}`)
 
       if (!response.ok) {
         throw new Error("Cliente não encontrado no sistema de pagamento")
@@ -97,6 +97,9 @@ export function PaymentForm({ clientId, totalAmount, onPaymentComplete }: Paymen
     try {
       // Primeiro, buscar o cliente no Asaas
       const customer = await getAsaasCustomer()
+      if (!customer) {
+        throw new Error("Cliente não encontrado no sistema de pagamento")
+      }
       setAsaasCustomer(customer)
 
       const paymentPayload = {
@@ -106,7 +109,7 @@ export function PaymentForm({ clientId, totalAmount, onPaymentComplete }: Paymen
         dueDate: new Date().toISOString().split("T")[0], // Data atual
       }
 
-      const response = await fetch("http://localhost:8080/api/v1/cobranca", {
+      const response = await fetch("https://api.caldosesopacg.com/api/v1/cobranca", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -133,7 +136,7 @@ export function PaymentForm({ clientId, totalAmount, onPaymentComplete }: Paymen
 
   const getPixQRCode = async (paymentId: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/cobranca/pixQrCode/${paymentId}`)
+      const response = await fetch(`https://api.caldosesopacg.com/api/v1/cobranca/pixQrCode/${paymentId}`)
 
       if (!response.ok) {
         throw new Error("Erro ao gerar QR Code PIX")

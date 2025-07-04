@@ -108,7 +108,7 @@ export default function HomePage() {
         // Simular delay de rede para mostrar loading
         await new Promise((resolve) => setTimeout(resolve, 1500))
 
-        const response = await fetch("http://localhost:8080/api/v1/produtos")
+        const response = await fetch("https://api.caldosesopacg.com/api/v1/produtos")
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
