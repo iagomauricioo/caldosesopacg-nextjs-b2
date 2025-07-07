@@ -343,7 +343,6 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
 
     return (
       formData.nome.trim() &&
-      formData.cpf.replace(/\D/g, "").length === 11 &&
       formData.telefone.replace(/\D/g, "").length === 11 &&
       formData.endereco?.rua?.trim() &&
       formData.endereco?.numero?.trim() &&
@@ -454,7 +453,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
                 />
               </div>
               <div>
-                <Label htmlFor="cpf">CPF *</Label>
+                <Label htmlFor="cpf">CPF</Label>
                 <Input
                   id="cpf"
                   value={formData.cpf}
