@@ -25,13 +25,6 @@ export interface PedidosResponse {
   timestamp: string
 }
 
-export interface PedidoStatusResponse {
-  success: boolean
-  statusCode: number
-  message: string
-  data: {
-    id: number
-    status: Pedido["status"]
-  }
-  timestamp: string
+export interface PedidoStatusUpdate {
+  status: Pedido["status"]
 }

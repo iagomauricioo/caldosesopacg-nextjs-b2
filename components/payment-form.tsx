@@ -1,27 +1,26 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, CreditCard, Smartphone, Banknote, Copy, Check, QrCode } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { CreditCard, Smartphone, Banknote, Copy, CheckCircle, Clock, QrCode, Info } from "lucide-react"
 import { useCart } from "@/contexts/cart-context"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
 interface PaymentFormProps {
   clientData: {
-    id: string
     nome: string
     telefone: string
-    endereco?: {
+    cpf?: string
+    endereco: {
       rua: string
       numero: string
       bairro: string
@@ -54,25 +53,28 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
 
   const [paymentMethod, setPaymentMethod] = useState<"PIX" | "CREDIT_CARD" | "DINHEIRO">("PIX")
   const [changeFor, setChangeFor] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [observations, setObservations] = useState("")
+  const [loading, setLoading] = useState(false)
   const [pixData, setPixData] = useState<PixResponse["data"] | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [pixCopied, setPixCopied] = useState(false)
 
-  const finalTotal = total + deliveryFee
+  const subtotal = total
+  const totalWithDelivery = subtotal + deliveryFee
+  const changeAmount = changeFor ? Number.parseFloat(changeFor) - totalWithDelivery / 100 : 0
 
   const handlePixPayment = async () => {
     console.log("🔥 Criando PIX estático...")
-    console.log("💰 Valor:", finalTotal)
-    console.log("👤 Cliente ID:", clientData.id)
+    console.log("💰 Valor:", Math.round(totalWithDelivery))
+    console.log("👤 Cliente ID:", clientData.telefone.replace(/\D/g, ""))
 
     try {
-      setIsProcessing(true)
+      setLoading(true)
 
       const pixPayload = {
-        description: `Pedido Caldos da Cynthia - ${items.length} item(s)`,
-        value: finalTotal,
+        description: "Pedido Caldos da Cynthia",
+        value: Math.round(totalWithDelivery),
         expirationSeconds: 300, // 5 minutos
-        externalReference: clientData.id,
+        externalReference: clientData.telefone.replace(/\D/g, ""),
       }
 
       console.log("📦 Payload PIX:", pixPayload)
@@ -91,63 +93,84 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
         throw new Error(`Erro HTTP: ${response.status}`)
       }
 
-      const data: PixResponse = await response.json()
-      console.log("✅ Resposta completa da API:", data)
+      const result: PixResponse = await response.json()
+      console.log("✅ Resposta completa da API:", result)
 
-      if (data.success && data.data) {
-        setPixData(data.data)
+      if (result.success && result.data) {
+        setPixData(result.data)
         console.log("🎯 PIX criado com sucesso!")
-        console.log("🆔 ID do PIX:", data.data.id)
-        console.log("💳 Payload:", data.data.payload)
+        console.log("🆔 ID do PIX:", result.data.id)
+        console.log("💳 Payload:", result.data.payload)
 
         toast({
           title: "PIX Gerado!",
           description: "Escaneie o QR Code ou copie o código PIX para pagar.",
         })
       } else {
-        throw new Error(data.message || "Erro ao gerar PIX")
+        throw new Error(result.message || "Erro ao gerar PIX")
       }
     } catch (error) {
       console.error("❌ Erro ao gerar PIX:", error)
       toast({
         title: "Erro no PIX",
-        description: "Não foi possível gerar o código PIX. Tente novamente.",
+        description: "Não foi possível gerar o PIX. Tente novamente.",
         variant: "destructive",
       })
     } finally {
-      setIsProcessing(false)
+      setLoading(false)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (paymentMethod === "PIX") {
-      await handlePixPayment()
-      return
+  const copyPixCode = async () => {
+    if (pixData?.payload) {
+      try {
+        await navigator.clipboard.writeText(pixData.payload)
+        setPixCopied(true)
+        toast({
+          title: "Código Copiado!",
+          description: "Cole no seu app de pagamentos.",
+        })
+        setTimeout(() => setPixCopied(false), 3000)
+      } catch (error) {
+        console.error("Erro ao copiar:", error)
+        toast({
+          title: "Erro ao Copiar",
+          description: "Não foi possível copiar o código.",
+          variant: "destructive",
+        })
+      }
     }
+  }
 
-    // Para outros métodos de pagamento, criar o pedido diretamente
+  const handleSubmitOrder = async () => {
+    console.log("🚀 Enviando pedido...")
     try {
-      setIsProcessing(true)
+      setLoading(true)
 
       const orderData = {
-        cliente_id: clientData.id,
-        items: items.map((item) => ({
+        cliente: {
+          nome: clientData.nome,
+          telefone: clientData.telefone.replace(/\D/g, ""),
+          cpf: clientData.cpf?.replace(/\D/g, "") || null,
+        },
+        endereco: clientData.endereco,
+        itens: items.map((item) => ({
           produto_id: item.id,
           quantidade: item.quantity,
-          preco_unitario_centavos: Math.round(item.price * 100),
+          preco_unitario_centavos: item.price,
+          observacoes: item.observations || null,
         })),
-        subtotal_centavos: Math.round(total * 100),
-        taxa_entrega_centavos: Math.round(deliveryFee * 100),
-        total_centavos: Math.round(finalTotal * 100),
+        subtotal_centavos: subtotal,
+        taxa_entrega_centavos: deliveryFee,
+        total_centavos: totalWithDelivery,
         forma_pagamento: paymentMethod,
         troco_para_centavos:
           paymentMethod === "DINHEIRO" && changeFor ? Math.round(Number.parseFloat(changeFor) * 100) : null,
-        observacoes: null,
+        observacoes: observations || null,
+        pagamento_id: pixData?.id || null,
       }
 
-      console.log("📝 Criando pedido:", orderData)
+      console.log("📦 Dados do pedido:", orderData)
 
       const response = await fetch("https://api.caldosesopacg.com/api/v1/pedidos", {
         method: "POST",
@@ -157,6 +180,8 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
         body: JSON.stringify(orderData),
       })
 
+      console.log("📡 Status da resposta:", response.status)
+
       if (!response.ok) {
         throw new Error(`Erro HTTP: ${response.status}`)
       }
@@ -165,253 +190,271 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
       console.log("✅ Pedido criado:", result)
 
       toast({
-        title: "Pedido Realizado!",
-        description: `Seu pedido foi recebido e será preparado em breve.`,
+        title: "Pedido Enviado!",
+        description: "Seu pedido foi recebido com sucesso.",
       })
 
       clearCart()
       onPaymentSuccess()
     } catch (error) {
-      console.error("❌ Erro ao criar pedido:", error)
+      console.error("❌ Erro ao enviar pedido:", error)
       toast({
         title: "Erro no Pedido",
-        description: "Não foi possível processar seu pedido. Tente novamente.",
+        description: "Não foi possível enviar o pedido. Tente novamente.",
         variant: "destructive",
       })
     } finally {
-      setIsProcessing(false)
+      setLoading(false)
     }
-  }
-
-  const copyPixCode = async () => {
-    if (pixData?.payload) {
-      try {
-        await navigator.clipboard.writeText(pixData.payload)
-        setCopied(true)
-        toast({
-          title: "Código Copiado!",
-          description: "Cole no seu app do banco para pagar.",
-        })
-        setTimeout(() => setCopied(false), 2000)
-      } catch (error) {
-        console.error("Erro ao copiar:", error)
-      }
-    }
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value)
   }
 
   return (
     <div className="space-y-6">
       {/* Resumo do Pedido */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Resumo do Pedido</CardTitle>
+      <Card className="border-cynthia-green-dark/20">
+        <CardHeader className="bg-cynthia-cream">
+          <CardTitle className="text-cynthia-green-dark">Resumo do Pedido</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {items.map((item) => (
             <div key={item.id} className="flex justify-between items-center">
               <div>
-                <span className="font-medium">{item.name}</span>
-                <span className="text-sm text-muted-foreground ml-2">x{item.quantity}</span>
+                <p className="font-medium text-cynthia-green-dark">{item.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {item.quantity}x{" "}
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.price / 100)}
+                </p>
+                {item.observations && <p className="text-xs text-cynthia-orange-pumpkin">Obs: {item.observations}</p>}
               </div>
-              <span>{formatCurrency(item.price * item.quantity)}</span>
+              <p className="font-semibold text-cynthia-green-dark">
+                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                  (item.price * item.quantity) / 100,
+                )}
+              </p>
             </div>
           ))}
 
           <Separator />
 
-          <div className="flex justify-between">
-            <span>Subtotal</span>
-            <span>{formatCurrency(total)}</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Taxa de Entrega</span>
-            <span>{deliveryFee > 0 ? formatCurrency(deliveryFee) : "Grátis"}</span>
-          </div>
-
-          <Separator />
-
-          <div className="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span>{formatCurrency(finalTotal)}</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Dados do Cliente */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados de Entrega</CardTitle>
-        </CardHeader>
-        <CardContent>
           <div className="space-y-2">
-            <p>
-              <strong>Nome:</strong> {clientData.nome}
-            </p>
-            <p>
-              <strong>Telefone:</strong> {clientData.telefone}
-            </p>
-            {clientData.endereco && (
-              <div>
-                <strong>Endereço:</strong>
-                <p className="text-sm text-muted-foreground">
-                  {clientData.endereco.rua}, {clientData.endereco.numero}
-                  {clientData.endereco.complemento && ` - ${clientData.endereco.complemento}`}
-                  <br />
-                  {clientData.endereco.bairro}, {clientData.endereco.cidade}
-                  <br />
-                  CEP: {clientData.endereco.cep}
-                </p>
-              </div>
-            )}
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>
+                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(subtotal / 100)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Taxa de Entrega:</span>
+              <span className={deliveryFee === 0 ? "text-cynthia-green-leaf font-semibold" : ""}>
+                {deliveryFee === 0
+                  ? "Grátis"
+                  : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(deliveryFee / 100)}
+              </span>
+            </div>
+            <div className="flex justify-between text-lg font-bold text-cynthia-green-dark">
+              <span>Total:</span>
+              <span>
+                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalWithDelivery / 100)}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* PIX Gerado */}
-      {pixData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5" />
-              PIX Gerado
+      {/* Forma de Pagamento */}
+      <Card className="border-cynthia-green-dark/20">
+        <CardHeader className="bg-cynthia-cream">
+          <CardTitle className="text-cynthia-green-dark">Forma de Pagamento</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as typeof paymentMethod)}>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors">
+              <RadioGroupItem value="PIX" id="pix" className="border-cynthia-green-dark text-cynthia-green-dark" />
+              <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer flex-1">
+                <Smartphone className="w-5 h-5 text-cynthia-green-leaf" />
+                <div>
+                  <p className="font-medium text-cynthia-green-dark">PIX</p>
+                  <p className="text-sm text-muted-foreground">Pagamento instantâneo</p>
+                </div>
+              </Label>
+              <Badge className="bg-cynthia-green-leaf text-white">Recomendado</Badge>
+            </div>
+
+            <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors opacity-50">
+              <RadioGroupItem value="CREDIT_CARD" id="card" disabled className="border-gray-400" />
+              <Label htmlFor="card" className="flex items-center gap-2 cursor-not-allowed flex-1">
+                <CreditCard className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="font-medium text-gray-400">Cartão de Crédito</p>
+                  <p className="text-sm text-gray-400">Em breve</p>
+                </div>
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors">
+              <RadioGroupItem
+                value="DINHEIRO"
+                id="money"
+                className="border-cynthia-green-dark text-cynthia-green-dark"
+              />
+              <Label htmlFor="money" className="flex items-center gap-2 cursor-pointer flex-1">
+                <Banknote className="w-5 h-5 text-cynthia-yellow-mustard" />
+                <div>
+                  <p className="font-medium text-cynthia-green-dark">Dinheiro</p>
+                  <p className="text-sm text-muted-foreground">Pagamento na entrega</p>
+                </div>
+              </Label>
+            </div>
+          </RadioGroup>
+
+          {paymentMethod === "DINHEIRO" && (
+            <div className="space-y-2 p-4 bg-cynthia-yellow-mustard/10 rounded-lg border border-cynthia-yellow-mustard/20">
+              <Label htmlFor="change" className="text-cynthia-green-dark font-medium">
+                Troco para quanto?
+              </Label>
+              <Input
+                id="change"
+                type="number"
+                step="0.01"
+                placeholder="Ex: 50.00"
+                value={changeFor}
+                onChange={(e) => setChangeFor(e.target.value)}
+                className="border-cynthia-yellow-mustard/30 focus:border-cynthia-green-dark"
+              />
+              {changeFor && changeAmount > 0 && (
+                <p className="text-sm text-cynthia-green-dark">
+                  <strong>Troco:</strong>{" "}
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(changeAmount)}
+                </p>
+              )}
+              {changeFor && changeAmount < 0 && (
+                <p className="text-sm text-red-600">
+                  Valor insuficiente. Mínimo:{" "}
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                    totalWithDelivery / 100,
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* PIX QR Code */}
+      {paymentMethod === "PIX" && pixData && (
+        <Card className="border-cynthia-green-leaf/30">
+          <CardHeader className="bg-cynthia-green-leaf/10">
+            <CardTitle className="flex items-center gap-2 text-cynthia-green-dark">
+              <QrCode className="w-5 h-5" />
+              Pagamento PIX
             </CardTitle>
-            <CardDescription>Escaneie o QR Code ou copie o código PIX para pagar</CardDescription>
+            <CardDescription>Escaneie o QR Code ou copie o código PIX</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <Alert className="border-cynthia-green-leaf/30 bg-cynthia-green-leaf/5">
+              <Info className="h-4 w-4 text-cynthia-green-leaf" />
+              <AlertDescription className="text-cynthia-green-dark">
+                <strong>PIX ID:</strong> {pixData.id}
+                <br />
+                <strong>Valor:</strong>{" "}
+                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                  Math.round(totalWithDelivery) / 100,
+                )}
+                <br />
+                <strong>Referência:</strong> {pixData.externalReference}
+                <br />
+                <strong>Expira em:</strong> 5 minutos
+              </AlertDescription>
+            </Alert>
+
             <div className="flex flex-col items-center space-y-4">
-              {/* QR Code */}
-              <div className="bg-white p-4 rounded-lg border">
+              <div className="p-4 bg-white rounded-lg border-2 border-cynthia-green-dark/20">
                 <Image
                   src={`data:image/png;base64,${pixData.encodedImage}`}
                   alt="QR Code PIX"
                   width={200}
                   height={200}
-                  className="mx-auto"
+                  className="rounded"
                 />
               </div>
 
-              {/* Informações do PIX */}
-              <div className="w-full space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">ID do PIX:</span>
-                  <span className="font-mono">{pixData.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Valor:</span>
-                  <span className="font-bold">{formatCurrency(finalTotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Referência:</span>
-                  <span className="font-mono text-xs">{pixData.externalReference}</span>
-                </div>
-              </div>
-
-              {/* Código PIX */}
-              <div className="w-full">
-                <Label htmlFor="pix-code">Código PIX</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input id="pix-code" value={pixData.payload} readOnly className="font-mono text-xs" />
-                  <Button type="button" variant="outline" size="icon" onClick={copyPixCode} disabled={copied}>
-                    {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              <div className="w-full space-y-2">
+                <Label className="text-cynthia-green-dark font-medium">Código PIX (Copia e Cola)</Label>
+                <div className="flex gap-2">
+                  <Input value={pixData.payload} readOnly className="font-mono text-xs border-cynthia-green-dark/30" />
+                  <Button
+                    onClick={copyPixCode}
+                    variant="outline"
+                    size="icon"
+                    className={`border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white ${
+                      pixCopied ? "bg-cynthia-green-leaf text-white" : ""
+                    }`}
+                  >
+                    {pixCopied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
-
-              <Alert>
-                <AlertDescription>
-                  ⏰ Este PIX expira em 5 minutos. Após o pagamento, seu pedido será confirmado automaticamente.
-                </AlertDescription>
-              </Alert>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Formulário de Pagamento */}
-      {!pixData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Forma de Pagamento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <RadioGroup
-                value={paymentMethod}
-                onValueChange={(value) => setPaymentMethod(value as typeof paymentMethod)}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="PIX" id="pix" />
-                  <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer">
-                    <Smartphone className="h-4 w-4" />
-                    PIX
-                    <Badge variant="secondary">Instantâneo</Badge>
-                  </Label>
-                </div>
+      {/* Observações */}
+      <Card className="border-cynthia-green-dark/20">
+        <CardHeader className="bg-cynthia-cream">
+          <CardTitle className="text-cynthia-green-dark">Observações (Opcional)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder="Alguma observação especial para seu pedido?"
+            value={observations}
+            onChange={(e) => setObservations(e.target.value)}
+            className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark"
+          />
+        </CardContent>
+      </Card>
 
-                <div className="flex items-center space-x-2 opacity-50">
-                  <RadioGroupItem value="CREDIT_CARD" id="credit" disabled />
-                  <Label htmlFor="credit" className="flex items-center gap-2 cursor-not-allowed">
-                    <CreditCard className="h-4 w-4" />
-                    Cartão de Crédito
-                    <Badge variant="outline">Em breve</Badge>
-                  </Label>
-                </div>
+      {/* Botões de Ação */}
+      <div className="space-y-3">
+        {paymentMethod === "PIX" && !pixData && (
+          <Button
+            onClick={handlePixPayment}
+            disabled={loading}
+            className="w-full bg-cynthia-green-dark hover:bg-cynthia-green-dark/90 text-white"
+            size="lg"
+          >
+            {loading ? (
+              <>
+                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                Gerando PIX...
+              </>
+            ) : (
+              <>
+                <Smartphone className="w-4 h-4 mr-2" />
+                Gerar PIX
+              </>
+            )}
+          </Button>
+        )}
 
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="DINHEIRO" id="money" />
-                  <Label htmlFor="money" className="flex items-center gap-2 cursor-pointer">
-                    <Banknote className="h-4 w-4" />
-                    Dinheiro
-                  </Label>
-                </div>
-              </RadioGroup>
-
-              {paymentMethod === "DINHEIRO" && (
-                <div className="space-y-2">
-                  <Label htmlFor="change">Troco para quanto? (opcional)</Label>
-                  <Input
-                    id="change"
-                    type="number"
-                    step="0.01"
-                    min={finalTotal}
-                    placeholder={`Mínimo: ${formatCurrency(finalTotal)}`}
-                    value={changeFor}
-                    onChange={(e) => setChangeFor(e.target.value)}
-                  />
-                  {changeFor && Number.parseFloat(changeFor) > finalTotal && (
-                    <p className="text-sm text-muted-foreground">
-                      Troco: {formatCurrency(Number.parseFloat(changeFor) - finalTotal)}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <Button type="submit" className="w-full" disabled={isProcessing} size="lg">
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    {paymentMethod === "PIX" && "Gerar PIX"}
-                    {paymentMethod === "CREDIT_CARD" && "Pagar com Cartão"}
-                    {paymentMethod === "DINHEIRO" && "Finalizar Pedido"}
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+        {(paymentMethod !== "PIX" || pixData) && (
+          <Button
+            onClick={handleSubmitOrder}
+            disabled={loading || (paymentMethod === "DINHEIRO" && changeAmount < 0)}
+            className="w-full bg-cynthia-green-dark hover:bg-cynthia-green-dark/90 text-white"
+            size="lg"
+          >
+            {loading ? (
+              <>
+                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                Enviando Pedido...
+              </>
+            ) : (
+              "Finalizar Pedido"
+            )}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

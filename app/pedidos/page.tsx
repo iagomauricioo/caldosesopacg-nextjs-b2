@@ -53,23 +53,64 @@ interface PedidosResponse {
 }
 
 const statusConfig = {
-  recebido: { label: "Recebido", color: "bg-blue-500", icon: Package },
-  preparando: { label: "Preparando", color: "bg-yellow-500", icon: Clock },
-  saiu_entrega: { label: "Saiu para Entrega", color: "bg-purple-500", icon: Truck },
-  entregue: { label: "Entregue", color: "bg-green-500", icon: CheckCircle },
-  cancelado: { label: "Cancelado", color: "bg-red-500", icon: XCircle },
+  recebido: {
+    label: "Recebido",
+    color: "bg-cynthia-green-leaf text-white",
+    icon: Package,
+  },
+  preparando: {
+    label: "Preparando",
+    color: "bg-cynthia-yellow-mustard text-cynthia-green-dark",
+    icon: Clock,
+  },
+  saiu_entrega: {
+    label: "Saiu para Entrega",
+    color: "bg-cynthia-orange-pumpkin text-white",
+    icon: Truck,
+  },
+  entregue: {
+    label: "Entregue",
+    color: "bg-cynthia-green-dark text-white",
+    icon: CheckCircle,
+  },
+  cancelado: {
+    label: "Cancelado",
+    color: "bg-red-500 text-white",
+    icon: XCircle,
+  },
 }
 
 const paymentConfig = {
-  PIX: { label: "PIX", icon: Smartphone, color: "bg-green-100 text-green-800" },
-  CREDIT_CARD: { label: "Cartão", icon: CreditCard, color: "bg-blue-100 text-blue-800" },
-  DINHEIRO: { label: "Dinheiro", icon: Banknote, color: "bg-yellow-100 text-yellow-800" },
+  PIX: {
+    label: "PIX",
+    icon: Smartphone,
+    color: "bg-cynthia-green-leaf/20 text-cynthia-green-dark border-cynthia-green-leaf/30",
+  },
+  CREDIT_CARD: {
+    label: "Cartão",
+    icon: CreditCard,
+    color: "bg-blue-100 text-blue-800 border-blue-200",
+  },
+  DINHEIRO: {
+    label: "Dinheiro",
+    icon: Banknote,
+    color: "bg-cynthia-yellow-mustard/20 text-cynthia-green-dark border-cynthia-yellow-mustard/30",
+  },
 }
 
 const paymentStatusConfig = {
-  pendente: { label: "Pendente", color: "bg-yellow-100 text-yellow-800" },
-  pago: { label: "Pago", color: "bg-green-100 text-green-800" },
-  cancelado: { label: "Cancelado", color: "bg-red-100 text-red-800" },
+  pendente: {
+    label: "Pendente",
+    color: "bg-cynthia-orange-pumpkin/20 text-cynthia-orange-pumpkin border-cynthia-orange-pumpkin/30",
+  },
+  pago: {
+    label: "Pago",
+    color: "bg-cynthia-green-leaf/20 text-cynthia-green-dark border-cynthia-green-leaf/30",
+  },
+  cancelado: {
+    label: "Cancelado",
+    color: "bg-red-100 text-red-800 border-red-200",
+  },
 }
 
 export default function PedidosPage() {
@@ -203,7 +244,7 @@ export default function PedidosPage() {
     const config = statusConfig[status]
     const Icon = config.icon
     return (
-      <Badge className={`${config.color} text-white`}>
+      <Badge className={config.color}>
         <Icon className="w-3 h-3 mr-1" />
         {config.label}
       </Badge>
@@ -234,58 +275,62 @@ export default function PedidosPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Carregando pedidos...</span>
+          <RefreshCw className="h-8 w-8 animate-spin text-cynthia-green-dark" />
+          <span className="ml-2 text-cynthia-green-dark">Carregando pedidos...</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6 bg-cynthia-cream/30 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Gerenciar Pedidos</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-cynthia-green-dark">Gerenciar Pedidos</h1>
+          <p className="text-cynthia-green-dark/70">
             {filteredPedidos.length} de {pedidos.length} pedidos
           </p>
         </div>
-        <Button onClick={fetchPedidos} variant="outline">
+        <Button
+          onClick={fetchPedidos}
+          variant="outline"
+          className="border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white bg-transparent"
+        >
           <RefreshCw className="w-4 h-4 mr-2" />
           Atualizar
         </Button>
       </div>
 
       {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="border-cynthia-green-dark/20 shadow-lg">
+        <CardHeader className="bg-cynthia-yellow-mustard/20">
+          <CardTitle className="flex items-center gap-2 text-cynthia-green-dark">
             <Filter className="w-5 h-5" />
             Filtros
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-white">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Busca */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Buscar</label>
+              <label className="text-sm font-medium text-cynthia-green-dark">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cynthia-green-dark/50 w-4 h-4" />
                 <Input
                   placeholder="ID do pedido ou cliente..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 border-cynthia-green-dark/30 focus:border-cynthia-green-dark"
                 />
               </div>
             </div>
 
             {/* Status */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
+              <label className="text-sm font-medium text-cynthia-green-dark">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -301,9 +346,9 @@ export default function PedidosPage() {
 
             {/* Pagamento */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Pagamento</label>
+              <label className="text-sm font-medium text-cynthia-green-dark">Pagamento</label>
               <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -322,22 +367,24 @@ export default function PedidosPage() {
 
       {/* Lista de Pedidos */}
       {filteredPedidos.length === 0 ? (
-        <Alert>
-          <Package className="h-4 w-4" />
-          <AlertDescription>Nenhum pedido encontrado com os filtros aplicados.</AlertDescription>
+        <Alert className="border-cynthia-orange-pumpkin/30 bg-cynthia-orange-pumpkin/10">
+          <Package className="h-4 w-4 text-cynthia-orange-pumpkin" />
+          <AlertDescription className="text-cynthia-green-dark">
+            Nenhum pedido encontrado com os filtros aplicados.
+          </AlertDescription>
         </Alert>
       ) : (
         <div className="grid gap-4">
           {filteredPedidos.map((pedido) => (
-            <Card key={pedido.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
+            <Card key={pedido.id} className="hover:shadow-lg transition-shadow border-cynthia-green-dark/20 bg-white">
+              <CardHeader className="bg-cynthia-cream/50">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-cynthia-green-dark">
                       Pedido #{pedido.id}
                       {getStatusBadge(pedido.status)}
                     </CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
+                    <CardDescription className="flex items-center gap-2 mt-1 text-cynthia-green-dark/70">
                       <Calendar className="w-4 h-4" />
                       {formatDate(pedido.data_pedido)}
                     </CardDescription>
@@ -348,33 +395,37 @@ export default function PedidosPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="bg-white">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Cliente ID</p>
-                    <p className="font-mono text-xs">{pedido.cliente_id}</p>
+                    <p className="text-sm text-cynthia-green-dark/70">Cliente ID</p>
+                    <p className="font-mono text-xs text-cynthia-green-dark">{pedido.cliente_id}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Subtotal</p>
-                    <p className="font-semibold">{formatCurrency(pedido.subtotal_centavos)}</p>
+                    <p className="text-sm text-cynthia-green-dark/70">Subtotal</p>
+                    <p className="font-semibold text-cynthia-green-dark">{formatCurrency(pedido.subtotal_centavos)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Taxa Entrega</p>
-                    <p className="font-semibold">
-                      {pedido.taxa_entrega_centavos > 0 ? formatCurrency(pedido.taxa_entrega_centavos) : "Grátis"}
+                    <p className="text-sm text-cynthia-green-dark/70">Taxa Entrega</p>
+                    <p className="font-semibold text-cynthia-green-dark">
+                      {pedido.taxa_entrega_centavos > 0 ? (
+                        formatCurrency(pedido.taxa_entrega_centavos)
+                      ) : (
+                        <span className="text-cynthia-green-leaf">Grátis</span>
+                      )}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total</p>
-                    <p className="font-bold text-lg">{formatCurrency(pedido.total_centavos)}</p>
+                    <p className="text-sm text-cynthia-green-dark/70">Total</p>
+                    <p className="font-bold text-lg text-cynthia-green-dark">{formatCurrency(pedido.total_centavos)}</p>
                   </div>
                 </div>
 
                 {pedido.forma_pagamento === "DINHEIRO" && pedido.troco_para_centavos && (
-                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                    <p className="text-sm">
+                  <div className="mt-4 p-3 bg-cynthia-yellow-mustard/20 rounded-lg border border-cynthia-yellow-mustard/30">
+                    <p className="text-sm text-cynthia-green-dark">
                       <strong>Troco para:</strong> {formatCurrency(pedido.troco_para_centavos)}
-                      <span className="ml-2 text-muted-foreground">
+                      <span className="ml-2 text-cynthia-green-dark/70">
                         (Troco: {formatCurrency(pedido.troco_para_centavos - pedido.total_centavos)})
                       </span>
                     </p>
@@ -382,28 +433,40 @@ export default function PedidosPage() {
                 )}
 
                 {pedido.observacoes && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm">
+                  <div className="mt-4 p-3 bg-cynthia-green-leaf/10 rounded-lg border border-cynthia-green-leaf/30">
+                    <p className="text-sm text-cynthia-green-dark">
                       <strong>Observações:</strong> {pedido.observacoes}
                     </p>
                   </div>
                 )}
 
-                <Separator className="my-4" />
+                <Separator className="my-4 border-cynthia-green-dark/20" />
 
                 <div className="flex flex-wrap gap-2">
                   {pedido.status === "recebido" && (
-                    <Button size="sm" onClick={() => updatePedidoStatus(pedido.id, "preparando")}>
+                    <Button
+                      size="sm"
+                      onClick={() => updatePedidoStatus(pedido.id, "preparando")}
+                      className="bg-cynthia-yellow-mustard hover:bg-cynthia-yellow-mustard/90 text-cynthia-green-dark"
+                    >
                       Iniciar Preparo
                     </Button>
                   )}
                   {pedido.status === "preparando" && (
-                    <Button size="sm" onClick={() => updatePedidoStatus(pedido.id, "saiu_entrega")}>
+                    <Button
+                      size="sm"
+                      onClick={() => updatePedidoStatus(pedido.id, "saiu_entrega")}
+                      className="bg-cynthia-orange-pumpkin hover:bg-cynthia-orange-pumpkin/90 text-white"
+                    >
                       Saiu para Entrega
                     </Button>
                   )}
                   {pedido.status === "saiu_entrega" && (
-                    <Button size="sm" onClick={() => updatePedidoStatus(pedido.id, "entregue")}>
+                    <Button
+                      size="sm"
+                      onClick={() => updatePedidoStatus(pedido.id, "entregue")}
+                      className="bg-cynthia-green-dark hover:bg-cynthia-green-dark/90 text-white"
+                    >
                       Marcar como Entregue
                     </Button>
                   )}
@@ -412,7 +475,12 @@ export default function PedidosPage() {
                       Cancelar
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => setSelectedPedido(pedido)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedPedido(pedido)}
+                    className="border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white"
+                  >
                     <Eye className="w-4 h-4 mr-1" />
                     Ver Detalhes
                   </Button>
@@ -423,29 +491,36 @@ export default function PedidosPage() {
         </div>
       )}
 
-      {/* Modal de Detalhes (simplificado) */}
+      {/* Modal de Detalhes */}
       {selectedPedido && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <CardHeader>
+          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto border-cynthia-green-dark/30 shadow-2xl">
+            <CardHeader className="bg-cynthia-cream">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>Detalhes do Pedido #{selectedPedido.id}</CardTitle>
-                  <CardDescription>{formatDate(selectedPedido.data_pedido)}</CardDescription>
+                  <CardTitle className="text-cynthia-green-dark">Detalhes do Pedido #{selectedPedido.id}</CardTitle>
+                  <CardDescription className="text-cynthia-green-dark/70">
+                    {formatDate(selectedPedido.data_pedido)}
+                  </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setSelectedPedido(null)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedPedido(null)}
+                  className="border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white"
+                >
                   Fechar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 bg-white">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="text-sm text-cynthia-green-dark/70">Status</p>
                   {getStatusBadge(selectedPedido.status)}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Pagamento</p>
+                  <p className="text-sm text-cynthia-green-dark/70">Pagamento</p>
                   <div className="flex gap-2">
                     {getPaymentBadge(selectedPedido.forma_pagamento)}
                     {getPaymentStatusBadge(selectedPedido.pagamento_status)}
@@ -453,28 +528,28 @@ export default function PedidosPage() {
                 </div>
               </div>
 
-              <Separator />
+              <Separator className="border-cynthia-green-dark/20" />
 
               <div>
-                <h4 className="font-semibold mb-2">Informações do Cliente</h4>
-                <p className="text-sm font-mono">{selectedPedido.cliente_id}</p>
-                <p className="text-sm text-muted-foreground">Endereço ID: {selectedPedido.endereco_id}</p>
+                <h4 className="font-semibold mb-2 text-cynthia-green-dark">Informações do Cliente</h4>
+                <p className="text-sm font-mono text-cynthia-green-dark">{selectedPedido.cliente_id}</p>
+                <p className="text-sm text-cynthia-green-dark/70">Endereço ID: {selectedPedido.endereco_id}</p>
               </div>
 
-              <Separator />
+              <Separator className="border-cynthia-green-dark/20" />
 
               <div>
-                <h4 className="font-semibold mb-2">Valores</h4>
+                <h4 className="font-semibold mb-2 text-cynthia-green-dark">Valores</h4>
                 <div className="space-y-1">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-cynthia-green-dark">
                     <span>Subtotal:</span>
                     <span>{formatCurrency(selectedPedido.subtotal_centavos)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-cynthia-green-dark">
                     <span>Taxa de Entrega:</span>
                     <span>{formatCurrency(selectedPedido.taxa_entrega_centavos)}</span>
                   </div>
-                  <div className="flex justify-between font-bold">
+                  <div className="flex justify-between font-bold text-cynthia-green-dark">
                     <span>Total:</span>
                     <span>{formatCurrency(selectedPedido.total_centavos)}</span>
                   </div>
@@ -483,20 +558,20 @@ export default function PedidosPage() {
 
               {selectedPedido.pagamento_id && (
                 <>
-                  <Separator />
+                  <Separator className="border-cynthia-green-dark/20" />
                   <div>
-                    <h4 className="font-semibold mb-2">Pagamento</h4>
-                    <p className="text-sm font-mono">{selectedPedido.pagamento_id}</p>
+                    <h4 className="font-semibold mb-2 text-cynthia-green-dark">Pagamento</h4>
+                    <p className="text-sm font-mono text-cynthia-green-dark">{selectedPedido.pagamento_id}</p>
                   </div>
                 </>
               )}
 
               {selectedPedido.data_entrega && (
                 <>
-                  <Separator />
+                  <Separator className="border-cynthia-green-dark/20" />
                   <div>
-                    <h4 className="font-semibold mb-2">Data de Entrega</h4>
-                    <p className="text-sm">{formatDate(selectedPedido.data_entrega)}</p>
+                    <h4 className="font-semibold mb-2 text-cynthia-green-dark">Data de Entrega</h4>
+                    <p className="text-sm text-cynthia-green-dark">{formatDate(selectedPedido.data_entrega)}</p>
                   </div>
                 </>
               )}
