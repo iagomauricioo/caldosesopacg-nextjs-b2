@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useCart } from "@/contexts/cart-context"
-import { useProducts } from "@/hooks/use-products"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,12 +14,12 @@ import { ClientForm } from "@/components/client-form"
 import { PaymentForm } from "@/components/payment-form"
 import Image from "next/image"
 import Link from "next/link"
+import type { Product } from "@/types/product"
 
 type CheckoutStep = "client" | "payment" | "confirmation"
 
 export default function CartPage() {
   const { state, dispatch, getSubtotal, getTotal, getItemCount } = useCart()
-  const { getProductImage } = useProducts()
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("client")
   const [clientId, setClientId] = useState<string | null>(null)
 
@@ -57,6 +56,19 @@ export default function CartPage() {
       default:
         return false
     }
+  }
+
+  function getImageUrl(product: Product): string {
+    if (product.imagem_url) return product.imagem_url;
+    const imageMap: { [key: number]: string } = {
+      1: "/images/caldos/caldo-de-galinha.png",
+      2: "/images/caldos/caldo-de-kenga.png",
+      3: "/images/caldos/caldo-de-charque.jpeg",
+      4: "/images/caldos/caldo-de-feijao.png",
+      5: "/images/caldos/caldo-de-legumes.jpeg",
+      6: "/images/caldos/creme-de-abobora.jpeg",
+    };
+    return imageMap[product.id] || "/placeholder.svg";
   }
 
   if (state.items.length === 0) {
@@ -139,7 +151,7 @@ export default function CartPage() {
                   >
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-white">
                       <Image
-                        src={getProductImage(item.product.id) || "/placeholder.svg"}
+                        src={getImageUrl(item.product)}
                         alt={item.product.nome}
                         fill
                         className="object-cover"
