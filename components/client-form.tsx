@@ -453,7 +453,7 @@ export function ClientForm({ onClientSaved }: ClientFormProps) {
                 />
               </div>
               <div>
-                <Label htmlFor="cpf">CPF</Label>
+                <Label htmlFor="cpf">CPF (opcional)</Label>
                 <Input
                   id="cpf"
                   value={formData.cpf}
