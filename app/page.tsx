@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { ProductCard } from "@/components/product-card"
-import { SearchAndFilters } from "@/components/search-and-filters"
 import { PageLoadingSkeleton } from "@/components/loading-states"
 import { ErrorBoundary, DefaultErrorFallback } from "@/components/error-boundary"
 import { Button } from "@/components/ui/button"
@@ -104,17 +103,15 @@ export default function HomePage() {
       try {
         setLoading(true)
         setError(null)
-
-        // Simular delay de rede para mostrar loading
         await new Promise((resolve) => setTimeout(resolve, 1500))
-
         const response = await fetch("https://api.caldosesopacg.com/api/v1/produtos")
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
-        const data = await response.json()
-        setProducts(data)
-        setFilteredProducts(data)
+        const responseJson = await response.json();
+        const produtos = responseJson.data || [];
+        setProducts(produtos);
+        setFilteredProducts(produtos);
       } catch (error) {
         console.error("Erro ao carregar produtos da API, usando dados mockados:", error)
         setError("Usando dados de exemplo - API indisponível")
@@ -124,12 +121,7 @@ export default function HomePage() {
         setLoading(false)
       }
     }
-
     fetchProducts()
-  }, [])
-
-  const handleFilteredProducts = useCallback((filtered: Product[]) => {
-    setFilteredProducts(filtered)
   }, [])
 
   if (loading) {
@@ -141,11 +133,9 @@ export default function HomePage() {
       <div className="min-h-screen bg-cynthia-cream">
         <FloatingLeaves />
         <Header />
-
         {/* Hero Section Melhorado */}
         <section className="relative h-96 bg-gradient-to-br from-cynthia-green-dark via-cynthia-green-dark/90 to-cynthia-green-dark text-white overflow-hidden">
           <div className="absolute inset-0 bg-black/10" />
-
           {/* Padrão decorativo animado */}
           <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-r from-cynthia-yellow-mustard via-cynthia-orange-pumpkin to-cynthia-yellow-mustard">
             <div className="flex items-center justify-center h-full space-x-8 animate-slide-in-left">
@@ -160,9 +150,7 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-
           <SoupBubbles className="absolute inset-0" />
-
           <div className="relative container mx-auto px-4 h-full flex items-center">
             <div className="max-w-2xl animate-slide-in-left">
               <Badge className="mb-4 bg-cynthia-yellow-mustard text-cynthia-green-dark hover:scale-105 transition-transform duration-300">
@@ -184,7 +172,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
         {/* Alert de Promoção Melhorado */}
         <section className="container mx-auto px-4 py-4">
           <Alert className="border-cynthia-yellow-mustard bg-gradient-to-r from-cynthia-yellow-mustard/10 to-cynthia-orange-pumpkin/10 hover:scale-[1.02] transition-transform duration-300">
@@ -195,7 +182,6 @@ export default function HomePage() {
             </AlertDescription>
           </Alert>
         </section>
-
         {/* API Error Alert */}
         {error && (
           <section className="container mx-auto px-4 pb-4">
@@ -205,12 +191,6 @@ export default function HomePage() {
             </Alert>
           </section>
         )}
-
-        {/* Search and Filters */}
-        <section className="container mx-auto px-4 py-8">
-          <SearchAndFilters products={products} onFilteredProducts={handleFilteredProducts} />
-        </section>
-
         {/* Products Grid */}
         <section className="container mx-auto px-4 pb-12" id="cardapio">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -232,9 +212,7 @@ export default function HomePage() {
               ))
             )}
           </div>
-
           <Separator className="my-12 bg-cynthia-yellow-mustard/30" />
-
           {/* Why Choose Us Section Melhorado */}
           <section className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 mb-8 shadow-xl border border-cynthia-yellow-mustard/30 animate-fade-in-up hover:shadow-2xl transition-shadow duration-500">
             <h2 className="text-3xl font-bold mb-8 text-center text-cynthia-green-dark">
@@ -286,7 +264,6 @@ export default function HomePage() {
               ))}
             </div>
           </section>
-
           {/* CTA Section Melhorado */}
           <section className="text-center mb-20 animate-fade-in-up">
             <div className="bg-gradient-to-r from-cynthia-yellow-mustard to-cynthia-orange-pumpkin rounded-2xl p-8 text-cynthia-green-dark shadow-xl border border-cynthia-orange-pumpkin/30 hover:scale-[1.02] transition-transform duration-300">
@@ -311,7 +288,6 @@ export default function HomePage() {
             </div>
           </section>
         </section>
-
         <Footer />
         <MobileNavbar />
       </div>

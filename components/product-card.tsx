@@ -20,7 +20,6 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { dispatch } = useCart()
-  const { getProductImage } = useProducts()
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation>(product.variacoes[0])
   const [quantity, setQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -62,6 +61,19 @@ export function ProductCard({ product }: ProductCardProps) {
     // Aqui você implementaria a lógica de favoritos
   }
 
+  function getImageUrl(product: Product) {
+    if (product.imagem_url) return product.imagem_url;
+    const imageMap: { [key: number]: string } = {
+      1: "/images/caldos/caldo-de-galinha.png",
+      2: "/images/caldos/caldo-de-kenga.png",
+      3: "/images/caldos/caldo-de-charque.jpeg",
+      4: "/images/caldos/caldo-de-feijao.png",
+      5: "/images/caldos/caldo-de-legumes.jpeg",
+      6: "/images/caldos/creme-de-abobora.jpeg",
+    };
+    return imageMap[product.id] || "/placeholder.svg";
+  }
+
   return (
     <Card className="h-[580px] flex flex-col overflow-hidden hover:shadow-xl transition-all duration-500 hover:scale-[1.02] bg-white border-cynthia-yellow-mustard/30 group relative">
       {/* Botão de Favorito */}
@@ -84,7 +96,7 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
 
           <Image
-            src={getProductImage(product.id) || "/placeholder.svg"}
+            src={getImageUrl(product)}
             alt={product.nome}
             fill
             className={`object-cover group-hover:scale-110 transition-transform duration-700 ${

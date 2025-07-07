@@ -89,64 +89,26 @@ export function useProducts() {
       try {
         setIsLoading(true)
         setError(null)
-
         const response = await fetch("https://api.caldosesopacg.com/api/v1/produtos")
-
         if (!response.ok) {
           throw new Error(`Erro na API: ${response.status}`)
         }
-
-        const data = await response.json()
+        const responseJson = await response.json();
+        const data = responseJson.data || [];
         setProducts(data)
       } catch (error) {
-        console.error("Erro ao carregar produtos da API, usando dados mockados:", error)
         setError("Usando dados de exemplo")
         setProducts(mockProducts)
       } finally {
         setIsLoading(false)
       }
     }
-
     fetchProducts()
   }, [])
-
-  const getProductById = (id: number): Product | undefined => {
-    return products.find((product) => product.id === id)
-  }
-
-  const getProductImage = (productId: number): string => {
-    const product = getProductById(productId)
-    if (product?.imagem_url) {
-      // Se a URL é relativa (começa com /), manter como está
-      if (product.imagem_url.startsWith('/')) {
-        return product.imagem_url
-      }
-      // Se é uma URL externa, usar diretamente
-      if (product.imagem_url.startsWith('http')) {
-        return product.imagem_url
-      }
-      // Se não tem protocolo, assumir que é relativa
-      return product.imagem_url
-    }
-
-    // Fallback para imagens locais baseado no ID
-    const imageMap: { [key: number]: string } = {
-      1: "/images/caldos/caldo-de-galinha.png",
-      2: "/images/caldos/caldo-de-kenga.png",
-      3: "/images/caldos/caldo-de-charque.jpeg",
-      4: "/images/caldos/caldo-de-feijao.png",
-      5: "/images/caldos/caldo-de-legumes.jpeg",
-      6: "/images/caldos/creme-de-abobora.jpeg",
-    }
-
-    return imageMap[productId] || "/placeholder.svg?height=200&width=300&text=Caldo"
-  }
 
   return {
     products,
     isLoading,
     error,
-    getProductById,
-    getProductImage,
   }
 }

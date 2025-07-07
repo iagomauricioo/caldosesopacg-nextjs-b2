@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -86,7 +86,7 @@ export function SearchAndFilters({ products, onFilteredProducts }: SearchAndFilt
   }, [products, searchTerm, selectedCategory, priceRange, sortBy])
 
   // Atualizar produtos filtrados
-  useMemo(() => {
+  useEffect(() => {
     onFilteredProducts(filteredProducts)
   }, [filteredProducts, onFilteredProducts])
 
