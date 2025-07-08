@@ -39,7 +39,7 @@ interface Pedido {
   data_pedido: string
   data_entrega: string | null
   pagamento_id: string | null
-  pagamento_status: "pendente" | "pago" | "cancelado"
+  pagamento_status: "pendente" | "aprovado" | "rejeitado" | "cancelado"
 }
 
 interface PedidosResponse {
@@ -103,9 +103,13 @@ const paymentStatusConfig = {
     label: "Pendente",
     color: "bg-cynthia-orange-pumpkin/20 text-cynthia-orange-pumpkin border-cynthia-orange-pumpkin/30",
   },
-  pago: {
-    label: "Pago",
+  aprovado: {
+    label: "Aprovado",
     color: "bg-cynthia-green-leaf/20 text-cynthia-green-dark border-cynthia-green-leaf/30",
+  },
+  rejeitado: {
+    label: "Rejeitado",
+    color: "bg-red-200 text-red-800 border-red-300",
   },
   cancelado: {
     label: "Cancelado",
@@ -264,6 +268,13 @@ export default function PedidosPage() {
 
   const getPaymentStatusBadge = (status: Pedido["pagamento_status"]) => {
     const config = paymentStatusConfig[status]
+    if (!config) {
+      return (
+        <Badge variant="outline" className="bg-gray-200 text-gray-700 border-gray-300">
+          Desconhecido
+        </Badge>
+      )
+    }
     return (
       <Badge variant="outline" className={config.color}>
         {config.label}
