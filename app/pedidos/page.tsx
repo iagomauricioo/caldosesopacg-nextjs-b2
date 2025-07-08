@@ -124,6 +124,7 @@ export default function PedidosPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
   const [paymentFilter, setPaymentFilter] = useState<string>("todos")
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("todos")
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null)
   const { toast } = useToast()
 
@@ -214,7 +215,7 @@ export default function PedidosPage() {
       )
     }
 
-    // Filtro por status
+    // Filtro por status do pedido
     if (statusFilter !== "todos") {
       filtered = filtered.filter((pedido) => pedido.status === statusFilter)
     }
@@ -224,8 +225,13 @@ export default function PedidosPage() {
       filtered = filtered.filter((pedido) => pedido.forma_pagamento === paymentFilter)
     }
 
+    // Filtro por status de pagamento
+    if (paymentStatusFilter !== "todos") {
+      filtered = filtered.filter((pedido) => pedido.pagamento_status === paymentStatusFilter)
+    }
+
     setFilteredPedidos(filtered)
-  }, [pedidos, searchTerm, statusFilter, paymentFilter])
+  }, [pedidos, searchTerm, statusFilter, paymentFilter, paymentStatusFilter])
 
   const formatCurrency = (centavos: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -322,7 +328,7 @@ export default function PedidosPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Busca */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-cynthia-green-dark">Buscar</label>
@@ -337,9 +343,9 @@ export default function PedidosPage() {
               </div>
             </div>
 
-            {/* Status */}
+            {/* Status do Pedido */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cynthia-green-dark">Status</label>
+              <label className="text-sm font-medium text-cynthia-green-dark">Status do Pedido</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark">
                   <SelectValue />
@@ -355,9 +361,9 @@ export default function PedidosPage() {
               </Select>
             </div>
 
-            {/* Pagamento */}
+            {/* Forma de Pagamento */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cynthia-green-dark">Pagamento</label>
+              <label className="text-sm font-medium text-cynthia-green-dark">Forma de Pagamento</label>
               <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                 <SelectTrigger className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark">
                   <SelectValue />
@@ -365,6 +371,24 @@ export default function PedidosPage() {
                 <SelectContent>
                   <SelectItem value="todos">Todas as Formas</SelectItem>
                   {Object.entries(paymentConfig).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      {config.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status do Pagamento */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-cynthia-green-dark">Status do Pagamento</label>
+              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                <SelectTrigger className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os Status</SelectItem>
+                  {Object.entries(paymentStatusConfig).map(([key, config]) => (
                     <SelectItem key={key} value={key}>
                       {config.label}
                     </SelectItem>
