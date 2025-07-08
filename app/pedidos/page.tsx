@@ -22,13 +22,42 @@ import {
   Banknote,
   Eye,
   Calendar,
+  User,
+  MapPin,
+  FileText,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+
+interface Cliente {
+  nome: string
+  telefone: string
+  cpf: string
+}
+
+interface Endereco {
+  rua: string
+  numero: string
+  complemento?: string
+  bairro: string
+  cep: string
+  ponto_referencia?: string
+}
+
+interface ItemPedido {
+  id: number
+  produto_id: number
+  quantidade: number
+  preco_unitario_centavos: number
+  observacoes?: string
+}
 
 interface Pedido {
   id: number
   cliente_id: string
   endereco_id: number
+  cliente: Cliente
+  endereco: Endereco
+  itens: ItemPedido[]
   subtotal_centavos: number
   taxa_entrega_centavos: number
   total_centavos: number
@@ -206,11 +235,13 @@ export default function PedidosPage() {
   useEffect(() => {
     let filtered = pedidos
 
-    // Filtro por busca (ID do pedido)
+    // Filtro por busca (ID do pedido, nome do cliente ou telefone)
     if (searchTerm) {
       filtered = filtered.filter(
         (pedido) =>
           pedido.id.toString().includes(searchTerm) ||
+          pedido.cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pedido.cliente.telefone.includes(searchTerm.replace(/\D/g, "")) ||
           pedido.cliente_id.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
@@ -248,6 +279,15 @@ export default function PedidosPage() {
       hour: "2-digit",
       minute: "2-digit",
     }).format(new Date(dateString))
+  }
+
+  const formatPhone = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, "")
+    return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")
+  }
+
+  const formatCEP = (cep: string) => {
+    return cep.replace(/(\d{5})(\d{3})/, "$1-$2")
   }
 
   const getStatusBadge = (status: Pedido["status"]) => {
@@ -335,7 +375,7 @@ export default function PedidosPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cynthia-green-dark/50 w-4 h-4" />
                 <Input
-                  placeholder="ID do pedido ou cliente..."
+                  placeholder="ID, nome, telefone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-cynthia-green-dark/30 focus:border-cynthia-green-dark"
@@ -430,12 +470,53 @@ export default function PedidosPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="bg-white">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-cynthia-green-dark/70">Cliente ID</p>
-                    <p className="font-mono text-xs text-cynthia-green-dark">{pedido.cliente_id}</p>
+              <CardContent className="bg-white space-y-4">
+                {/* Informações do Cliente */}
+                <div className="bg-cynthia-green-leaf/5 p-4 rounded-lg border border-cynthia-green-leaf/20">
+                  <h4 className="font-semibold text-cynthia-green-dark mb-2 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Cliente
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-cynthia-green-dark/70">Nome</p>
+                      <p className="font-medium text-cynthia-green-dark">{pedido.cliente.nome}</p>
+                    </div>
+                    <div>
+                      <p className="text-cynthia-green-dark/70">Telefone</p>
+                      <p className="font-medium text-cynthia-green-dark">{formatPhone(pedido.cliente.telefone)}</p>
+                    </div>
+                    <div>
+                      <p className="text-cynthia-green-dark/70">CPF</p>
+                      <p className="font-medium text-cynthia-green-dark">{pedido.cliente.cpf || "Não informado"}</p>
+                    </div>
                   </div>
+                </div>
+
+                {/* Endereço de Entrega */}
+                <div className="bg-cynthia-yellow-mustard/5 p-4 rounded-lg border border-cynthia-yellow-mustard/20">
+                  <h4 className="font-semibold text-cynthia-green-dark mb-2 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Endereço de Entrega
+                  </h4>
+                  <div className="text-sm text-cynthia-green-dark">
+                    <p>
+                      {pedido.endereco.rua}, {pedido.endereco.numero}
+                      {pedido.endereco.complemento && ` - ${pedido.endereco.complemento}`}
+                    </p>
+                    <p>
+                      {pedido.endereco.bairro} - CEP: {formatCEP(pedido.endereco.cep)}
+                    </p>
+                    {pedido.endereco.ponto_referencia && (
+                      <p className="text-cynthia-green-dark/70 mt-1">
+                        <strong>Referência:</strong> {pedido.endereco.ponto_referencia}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Valores */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm text-cynthia-green-dark/70">Subtotal</p>
                     <p className="font-semibold text-cynthia-green-dark">{formatCurrency(pedido.subtotal_centavos)}</p>
@@ -454,10 +535,14 @@ export default function PedidosPage() {
                     <p className="text-sm text-cynthia-green-dark/70">Total</p>
                     <p className="font-bold text-lg text-cynthia-green-dark">{formatCurrency(pedido.total_centavos)}</p>
                   </div>
+                  <div>
+                    <p className="text-sm text-cynthia-green-dark/70">Itens</p>
+                    <p className="font-semibold text-cynthia-green-dark">{pedido.itens.length} item(s)</p>
+                  </div>
                 </div>
 
                 {pedido.forma_pagamento === "DINHEIRO" && pedido.troco_para_centavos && (
-                  <div className="mt-4 p-3 bg-cynthia-yellow-mustard/20 rounded-lg border border-cynthia-yellow-mustard/30">
+                  <div className="p-3 bg-cynthia-yellow-mustard/20 rounded-lg border border-cynthia-yellow-mustard/30">
                     <p className="text-sm text-cynthia-green-dark">
                       <strong>Troco para:</strong> {formatCurrency(pedido.troco_para_centavos)}
                       <span className="ml-2 text-cynthia-green-dark/70">
@@ -468,14 +553,17 @@ export default function PedidosPage() {
                 )}
 
                 {pedido.observacoes && (
-                  <div className="mt-4 p-3 bg-cynthia-green-leaf/10 rounded-lg border border-cynthia-green-leaf/30">
-                    <p className="text-sm text-cynthia-green-dark">
-                      <strong>Observações:</strong> {pedido.observacoes}
+                  <div className="p-3 bg-cynthia-green-leaf/10 rounded-lg border border-cynthia-green-leaf/30">
+                    <p className="text-sm text-cynthia-green-dark flex items-start gap-2">
+                      <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>
+                        <strong>Observações:</strong> {pedido.observacoes}
+                      </span>
                     </p>
                   </div>
                 )}
 
-                <Separator className="my-4 border-cynthia-green-dark/20" />
+                <Separator className="border-cynthia-green-dark/20" />
 
                 <div className="flex flex-wrap gap-2">
                   {pedido.status === "recebido" && (
@@ -529,7 +617,7 @@ export default function PedidosPage() {
       {/* Modal de Detalhes */}
       {selectedPedido && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto border-cynthia-green-dark/30 shadow-2xl">
+          <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto border-cynthia-green-dark/30 shadow-2xl">
             <CardHeader className="bg-cynthia-cream">
               <div className="flex justify-between items-start">
                 <div>
@@ -548,10 +636,11 @@ export default function PedidosPage() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 bg-white">
+            <CardContent className="space-y-6 bg-white">
+              {/* Status e Pagamento */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-cynthia-green-dark/70">Status</p>
+                  <p className="text-sm text-cynthia-green-dark/70">Status do Pedido</p>
                   {getStatusBadge(selectedPedido.status)}
                 </div>
                 <div>
@@ -565,48 +654,131 @@ export default function PedidosPage() {
 
               <Separator className="border-cynthia-green-dark/20" />
 
+              {/* Informações Completas do Cliente */}
               <div>
-                <h4 className="font-semibold mb-2 text-cynthia-green-dark">Informações do Cliente</h4>
-                <p className="text-sm font-mono text-cynthia-green-dark">{selectedPedido.cliente_id}</p>
-                <p className="text-sm text-cynthia-green-dark/70">Endereço ID: {selectedPedido.endereco_id}</p>
+                <h4 className="font-semibold mb-3 text-cynthia-green-dark flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Informações do Cliente
+                </h4>
+                <div className="bg-cynthia-green-leaf/5 p-4 rounded-lg space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-cynthia-green-dark/70">Nome Completo</p>
+                      <p className="font-medium text-cynthia-green-dark">{selectedPedido.cliente.nome}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-cynthia-green-dark/70">Telefone</p>
+                      <p className="font-medium text-cynthia-green-dark">
+                        {formatPhone(selectedPedido.cliente.telefone)}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-cynthia-green-dark/70">CPF</p>
+                    <p className="font-medium text-cynthia-green-dark">
+                      {selectedPedido.cliente.cpf || "Não informado"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-cynthia-green-dark/70">ID do Cliente</p>
+                    <p className="font-mono text-xs text-cynthia-green-dark">{selectedPedido.cliente_id}</p>
+                  </div>
+                </div>
               </div>
 
               <Separator className="border-cynthia-green-dark/20" />
 
+              {/* Endereço Completo */}
               <div>
-                <h4 className="font-semibold mb-2 text-cynthia-green-dark">Valores</h4>
-                <div className="space-y-1">
+                <h4 className="font-semibold mb-3 text-cynthia-green-dark flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Endereço de Entrega
+                </h4>
+                <div className="bg-cynthia-yellow-mustard/5 p-4 rounded-lg space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-cynthia-green-dark/70">Rua e Número</p>
+                      <p className="font-medium text-cynthia-green-dark">
+                        {selectedPedido.endereco.rua}, {selectedPedido.endereco.numero}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-cynthia-green-dark/70">Bairro</p>
+                      <p className="font-medium text-cynthia-green-dark">{selectedPedido.endereco.bairro}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-cynthia-green-dark/70">CEP</p>
+                      <p className="font-medium text-cynthia-green-dark">{formatCEP(selectedPedido.endereco.cep)}</p>
+                    </div>
+                    {selectedPedido.endereco.complemento && (
+                      <div>
+                        <p className="text-sm text-cynthia-green-dark/70">Complemento</p>
+                        <p className="font-medium text-cynthia-green-dark">{selectedPedido.endereco.complemento}</p>
+                      </div>
+                    )}
+                  </div>
+                  {selectedPedido.endereco.ponto_referencia && (
+                    <div>
+                      <p className="text-sm text-cynthia-green-dark/70">Ponto de Referência</p>
+                      <p className="font-medium text-cynthia-green-dark">{selectedPedido.endereco.ponto_referencia}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Separator className="border-cynthia-green-dark/20" />
+
+              {/* Valores Detalhados */}
+              <div>
+                <h4 className="font-semibold mb-3 text-cynthia-green-dark">Valores</h4>
+                <div className="space-y-2">
                   <div className="flex justify-between text-cynthia-green-dark">
                     <span>Subtotal:</span>
-                    <span>{formatCurrency(selectedPedido.subtotal_centavos)}</span>
+                    <span className="font-medium">{formatCurrency(selectedPedido.subtotal_centavos)}</span>
                   </div>
                   <div className="flex justify-between text-cynthia-green-dark">
                     <span>Taxa de Entrega:</span>
-                    <span>{formatCurrency(selectedPedido.taxa_entrega_centavos)}</span>
+                    <span className="font-medium">{formatCurrency(selectedPedido.taxa_entrega_centavos)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-cynthia-green-dark">
+                  <Separator className="border-cynthia-green-dark/20" />
+                  <div className="flex justify-between font-bold text-lg text-cynthia-green-dark">
                     <span>Total:</span>
                     <span>{formatCurrency(selectedPedido.total_centavos)}</span>
                   </div>
                 </div>
               </div>
 
-              {selectedPedido.pagamento_id && (
+              {/* Informações Adicionais */}
+              {(selectedPedido.pagamento_id || selectedPedido.data_entrega || selectedPedido.observacoes) && (
                 <>
                   <Separator className="border-cynthia-green-dark/20" />
-                  <div>
-                    <h4 className="font-semibold mb-2 text-cynthia-green-dark">Pagamento</h4>
-                    <p className="text-sm font-mono text-cynthia-green-dark">{selectedPedido.pagamento_id}</p>
-                  </div>
-                </>
-              )}
+                  <div className="space-y-4">
+                    {selectedPedido.pagamento_id && (
+                      <div>
+                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">ID do Pagamento</h4>
+                        <p className="text-sm font-mono text-cynthia-green-dark bg-gray-50 p-2 rounded">
+                          {selectedPedido.pagamento_id}
+                        </p>
+                      </div>
+                    )}
 
-              {selectedPedido.data_entrega && (
-                <>
-                  <Separator className="border-cynthia-green-dark/20" />
-                  <div>
-                    <h4 className="font-semibold mb-2 text-cynthia-green-dark">Data de Entrega</h4>
-                    <p className="text-sm text-cynthia-green-dark">{formatDate(selectedPedido.data_entrega)}</p>
+                    {selectedPedido.data_entrega && (
+                      <div>
+                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">Data de Entrega</h4>
+                        <p className="text-sm text-cynthia-green-dark">{formatDate(selectedPedido.data_entrega)}</p>
+                      </div>
+                    )}
+
+                    {selectedPedido.observacoes && (
+                      <div>
+                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">Observações</h4>
+                        <p className="text-sm text-cynthia-green-dark bg-cynthia-green-leaf/5 p-3 rounded">
+                          {selectedPedido.observacoes}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
