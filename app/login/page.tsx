@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Lock, User, Eye, EyeOff, ChefHat } from "lucide-react"
+import { Eye, EyeOff, LogIn, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface LoginResponse {
@@ -33,18 +33,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState("")
   const router = useRouter()
   const { toast } = useToast()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     setLoading(true)
-    setError(null)
 
-    console.log("🔐 Tentando fazer login...")
+    // Validações básicas
+    if (!email || !password) {
+      setError("Por favor, preencha todos os campos.")
+      setLoading(false)
+      return
+    }
+
+    if (!email.includes("@")) {
+      setError("Por favor, insira um email válido.")
+      setLoading(false)
+      return
+    }
 
     try {
+      console.log("🔐 Tentando fazer login...")
+
       const response = await fetch("https://api.caldosesopacg.com/api/v1/auth/login", {
         method: "POST",
         headers: {
@@ -59,9 +72,9 @@ export default function LoginPage() {
       console.log("📡 Status da resposta:", response.status)
 
       const data: LoginResponse = await response.json()
-      console.log("📦 Resposta da API:", data)
+      console.log("📋 Resposta do servidor:", data)
 
-      if (response.ok && data.success && data.data) {
+      if (data.success && data.data) {
         // Salvar token no localStorage
         localStorage.setItem("auth_token", data.data.token)
         localStorage.setItem("user_data", JSON.stringify(data.data.user))
@@ -76,15 +89,15 @@ export default function LoginPage() {
         // Redirecionar para a página de pedidos
         router.push("/pedidos")
       } else {
-        throw new Error(data.message || "Credenciais inválidas")
+        throw new Error(data.message || "Erro ao fazer login")
       }
-    } catch (err) {
-      console.error("❌ Erro no login:", err)
-      const errorMessage = err instanceof Error ? err.message : "Erro ao fazer login"
-      setError(errorMessage)
+    } catch (error) {
+      console.error("❌ Erro no login:", error)
+      setError(error instanceof Error ? error.message : "Erro interno do servidor")
+
       toast({
         title: "Erro no Login",
-        description: errorMessage,
+        description: "Verifique suas credenciais e tente novamente.",
         variant: "destructive",
       })
     } finally {
@@ -92,55 +105,63 @@ export default function LoginPage() {
     }
   }
 
-  const isFormValid = email.trim() && password.length >= 6
+  const fillTestCredentials = () => {
+    setEmail("admin@caldosesopacg.com")
+    setPassword("admin123")
+    toast({
+      title: "Credenciais Preenchidas",
+      description: "Credenciais de teste foram inseridas automaticamente.",
+    })
+  }
 
   return (
-    <div className="min-h-screen bg-cynthia-cream/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Logo/Header */}
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-cynthia-green-dark rounded-full flex items-center justify-center">
-            <ChefHat className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-cynthia-cream via-cynthia-cream/50 to-cynthia-yellow-mustard/20 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo e Título */}
+        <div className="text-center mb-8">
+          <div className="mx-auto w-20 h-20 bg-cynthia-green-dark rounded-full flex items-center justify-center mb-4">
+            <LogIn className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-cynthia-green-dark">Caldos da Cynthia</h1>
+          <h1 className="text-3xl font-bold text-cynthia-green-dark mb-2">Caldos da Cynthia</h1>
           <p className="text-cynthia-green-dark/70">Painel Administrativo</p>
         </div>
 
-        {/* Formulário de Login */}
-        <Card className="border-cynthia-green-dark/20 shadow-lg">
-          <CardHeader className="bg-cynthia-yellow-mustard/20">
-            <CardTitle className="flex items-center gap-2 text-cynthia-green-dark">
+        {/* Card de Login */}
+        <Card className="border-cynthia-green-dark/20 shadow-xl">
+          <CardHeader className="bg-cynthia-green-dark text-white rounded-t-lg">
+            <CardTitle className="text-center flex items-center justify-center gap-2">
               <Lock className="w-5 h-5" />
               Fazer Login
             </CardTitle>
-            <CardDescription className="text-cynthia-green-dark/70">
-              Entre com suas credenciais para acessar o painel
+            <CardDescription className="text-center text-white/80">
+              Entre com suas credenciais para acessar o sistema
             </CardDescription>
           </CardHeader>
-          <CardContent className="bg-white">
+
+          <CardContent className="bg-white p-6">
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Email */}
+              {/* Campo Email */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-cynthia-green-dark">
+                <Label htmlFor="email" className="text-cynthia-green-dark font-medium">
                   Email
                 </Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cynthia-green-dark/50 w-4 h-4" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cynthia-green-dark/50 w-4 h-4" />
                   <Input
                     id="email"
                     type="email"
+                    placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
                     className="pl-10 border-cynthia-green-dark/30 focus:border-cynthia-green-dark"
-                    required
+                    disabled={loading}
                   />
                 </div>
               </div>
 
-              {/* Senha */}
+              {/* Campo Senha */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-cynthia-green-dark">
+                <Label htmlFor="password" className="text-cynthia-green-dark font-medium">
                   Senha
                 </Label>
                 <div className="relative">
@@ -148,17 +169,17 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    placeholder="Sua senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Sua senha"
                     className="pl-10 pr-10 border-cynthia-green-dark/30 focus:border-cynthia-green-dark"
-                    required
-                    minLength={6}
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-cynthia-green-dark/50 hover:text-cynthia-green-dark"
+                    disabled={loading}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -167,7 +188,8 @@ export default function LoginPage() {
 
               {/* Mensagem de Erro */}
               {error && (
-                <Alert className="border-red-400 bg-red-50">
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-800">{error}</AlertDescription>
                 </Alert>
               )}
@@ -175,41 +197,57 @@ export default function LoginPage() {
               {/* Botão de Login */}
               <Button
                 type="submit"
-                disabled={!isFormValid || loading}
                 className="w-full bg-cynthia-green-dark hover:bg-cynthia-green-dark/90 text-white"
+                disabled={loading}
               >
                 {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Entrando...
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <Lock className="w-4 h-4 mr-2" />
+                  <div className="flex items-center gap-2">
+                    <LogIn className="w-4 h-4" />
                     Entrar
-                  </>
+                  </div>
                 )}
               </Button>
             </form>
 
-            {/* Informações de Teste */}
-            <div className="mt-6 p-4 bg-cynthia-cream/50 rounded-lg border border-cynthia-yellow-mustard/30">
-              <h4 className="font-semibold text-cynthia-green-dark mb-2">Credenciais de Teste:</h4>
-              <div className="text-sm text-cynthia-green-dark/70 space-y-1">
-                <p>
-                  <strong>Email:</strong> admin@caldosesopacg.com
-                </p>
-                <p>
-                  <strong>Senha:</strong> admin123
-                </p>
+            {/* Credenciais de Teste */}
+            <div className="mt-6 pt-4 border-t border-cynthia-green-dark/20">
+              <div className="bg-cynthia-yellow-mustard/10 p-4 rounded-lg border border-cynthia-yellow-mustard/30">
+                <h4 className="font-semibold text-cynthia-green-dark mb-2 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Credenciais de Teste
+                </h4>
+                <div className="text-sm text-cynthia-green-dark/80 space-y-1 mb-3">
+                  <p>
+                    <strong>Email:</strong> admin@caldosesopacg.com
+                  </p>
+                  <p>
+                    <strong>Senha:</strong> admin123
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={fillTestCredentials}
+                  className="border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white bg-transparent"
+                  disabled={loading}
+                >
+                  Preencher Automaticamente
+                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="text-center text-sm text-cynthia-green-dark/70">
-          <p>© 2025 Caldos da Cynthia - Todos os direitos reservados</p>
+        {/* Informações Adicionais */}
+        <div className="text-center mt-6 text-sm text-cynthia-green-dark/70">
+          <p>Sistema de Gerenciamento de Pedidos</p>
+          <p className="mt-1">© 2024 Caldos da Cynthia - Todos os direitos reservados</p>
         </div>
       </div>
     </div>

@@ -25,6 +25,8 @@ import {
   User,
   MapPin,
   FileText,
+  ShoppingBag,
+  Plus,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -43,12 +45,22 @@ interface Endereco {
   ponto_referencia?: string
 }
 
+interface Acompanhamento {
+  id: number
+  quantidade: number
+  preco_centavos: number
+  nome_acompanhamento: string
+}
+
 interface ItemPedido {
   id: number
-  produto_id: number
   quantidade: number
+  tamanho_ml: number
+  observacoes: string | null
+  nome_produto: string
+  acompanhamentos: Acompanhamento[]
+  subtotal_centavos: number
   preco_unitario_centavos: number
-  observacoes?: string
 }
 
 interface Pedido {
@@ -235,14 +247,15 @@ export default function PedidosPage() {
   useEffect(() => {
     let filtered = pedidos
 
-    // Filtro por busca (ID do pedido, nome do cliente ou telefone)
+    // Filtro por busca (ID do pedido, nome do cliente, telefone ou produto)
     if (searchTerm) {
       filtered = filtered.filter(
         (pedido) =>
           pedido.id.toString().includes(searchTerm) ||
           pedido.cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
           pedido.cliente.telefone.includes(searchTerm.replace(/\D/g, "")) ||
-          pedido.cliente_id.toLowerCase().includes(searchTerm.toLowerCase()),
+          pedido.cliente_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pedido.itens.some((item) => item.nome_produto.toLowerCase().includes(searchTerm.toLowerCase())),
       )
     }
 
@@ -328,6 +341,14 @@ export default function PedidosPage() {
     )
   }
 
+  const calculateItemTotal = (item: ItemPedido) => {
+    const acompanhamentosTotal = item.acompanhamentos.reduce(
+      (total, acomp) => total + acomp.preco_centavos * acomp.quantidade,
+      0,
+    )
+    return item.subtotal_centavos + acompanhamentosTotal
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -375,7 +396,7 @@ export default function PedidosPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cynthia-green-dark/50 w-4 h-4" />
                 <Input
-                  placeholder="ID, nome, telefone..."
+                  placeholder="ID, nome, telefone, produto..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-cynthia-green-dark/30 focus:border-cynthia-green-dark"
@@ -514,6 +535,67 @@ export default function PedidosPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Itens do Pedido */}
+                {pedido.itens.length > 0 && (
+                  <div className="bg-cynthia-orange-pumpkin/5 p-4 rounded-lg border border-cynthia-orange-pumpkin/20">
+                    <h4 className="font-semibold text-cynthia-green-dark mb-3 flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4" />
+                      Itens do Pedido ({pedido.itens.length})
+                    </h4>
+                    <div className="space-y-3">
+                      {pedido.itens.map((item, index) => (
+                        <div key={index} className="bg-white p-3 rounded-lg border border-cynthia-orange-pumpkin/10">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <h5 className="font-medium text-cynthia-green-dark">{item.nome_produto}</h5>
+                              <div className="flex items-center gap-4 text-sm text-cynthia-green-dark/70 mt-1">
+                                <span>Quantidade: {item.quantidade}</span>
+                                <span>Tamanho: {item.tamanho_ml}ml</span>
+                                <span>Unitário: {formatCurrency(item.preco_unitario_centavos)}</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-cynthia-green-dark">
+                                {formatCurrency(calculateItemTotal(item))}
+                              </p>
+                            </div>
+                          </div>
+
+                          {item.observacoes && (
+                            <div className="bg-cynthia-green-leaf/10 p-2 rounded text-sm text-cynthia-green-dark mt-2">
+                              <strong>Obs:</strong> {item.observacoes}
+                            </div>
+                          )}
+
+                          {item.acompanhamentos.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm font-medium text-cynthia-green-dark mb-1 flex items-center gap-1">
+                                <Plus className="w-3 h-3" />
+                                Acompanhamentos:
+                              </p>
+                              <div className="space-y-1">
+                                {item.acompanhamentos.map((acomp, acompIndex) => (
+                                  <div
+                                    key={acompIndex}
+                                    className="flex justify-between items-center text-sm bg-cynthia-yellow-mustard/10 p-2 rounded"
+                                  >
+                                    <span className="text-cynthia-green-dark">
+                                      {acomp.quantidade}x {acomp.nome_acompanhamento}
+                                    </span>
+                                    <span className="font-medium text-cynthia-green-dark">
+                                      {formatCurrency(acomp.preco_centavos * acomp.quantidade)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Valores */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -730,12 +812,94 @@ export default function PedidosPage() {
 
               <Separator className="border-cynthia-green-dark/20" />
 
+              {/* Itens Detalhados */}
+              {selectedPedido.itens.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 text-cynthia-green-dark flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5" />
+                    Itens do Pedido ({selectedPedido.itens.length})
+                  </h4>
+                  <div className="space-y-4">
+                    {selectedPedido.itens.map((item, index) => (
+                      <div
+                        key={index}
+                        className="bg-cynthia-orange-pumpkin/5 p-4 rounded-lg border border-cynthia-orange-pumpkin/20"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h5 className="font-semibold text-cynthia-green-dark text-lg">{item.nome_produto}</h5>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-cynthia-green-dark/70 mt-2">
+                              <div>
+                                <span className="font-medium">Quantidade:</span> {item.quantidade}
+                              </div>
+                              <div>
+                                <span className="font-medium">Tamanho:</span> {item.tamanho_ml}ml
+                              </div>
+                              <div>
+                                <span className="font-medium">Unitário:</span>{" "}
+                                {formatCurrency(item.preco_unitario_centavos)}
+                              </div>
+                              <div>
+                                <span className="font-medium">Subtotal:</span> {formatCurrency(item.subtotal_centavos)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-lg text-cynthia-green-dark">
+                              {formatCurrency(calculateItemTotal(item))}
+                            </p>
+                            <p className="text-xs text-cynthia-green-dark/70">Total do item</p>
+                          </div>
+                        </div>
+
+                        {item.observacoes && (
+                          <div className="bg-cynthia-green-leaf/10 p-3 rounded text-sm text-cynthia-green-dark mb-3">
+                            <strong>Observações:</strong> {item.observacoes}
+                          </div>
+                        )}
+
+                        {item.acompanhamentos.length > 0 && (
+                          <div>
+                            <p className="text-sm font-semibold text-cynthia-green-dark mb-2 flex items-center gap-1">
+                              <Plus className="w-4 h-4" />
+                              Acompanhamentos:
+                            </p>
+                            <div className="grid gap-2">
+                              {item.acompanhamentos.map((acomp, acompIndex) => (
+                                <div
+                                  key={acompIndex}
+                                  className="flex justify-between items-center bg-cynthia-yellow-mustard/10 p-3 rounded border border-cynthia-yellow-mustard/20"
+                                >
+                                  <div>
+                                    <span className="font-medium text-cynthia-green-dark">
+                                      {acomp.nome_acompanhamento}
+                                    </span>
+                                    <p className="text-sm text-cynthia-green-dark/70">
+                                      Quantidade: {acomp.quantidade} | Unitário: {formatCurrency(acomp.preco_centavos)}
+                                    </p>
+                                  </div>
+                                  <span className="font-semibold text-cynthia-green-dark">
+                                    {formatCurrency(acomp.preco_centavos * acomp.quantidade)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Separator className="border-cynthia-green-dark/20" />
+
               {/* Valores Detalhados */}
               <div>
-                <h4 className="font-semibold mb-3 text-cynthia-green-dark">Valores</h4>
+                <h4 className="font-semibold mb-3 text-cynthia-green-dark">Resumo Financeiro</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-cynthia-green-dark">
-                    <span>Subtotal:</span>
+                    <span>Subtotal dos Itens:</span>
                     <span className="font-medium">{formatCurrency(selectedPedido.subtotal_centavos)}</span>
                   </div>
                   <div className="flex justify-between text-cynthia-green-dark">
@@ -744,7 +908,7 @@ export default function PedidosPage() {
                   </div>
                   <Separator className="border-cynthia-green-dark/20" />
                   <div className="flex justify-between font-bold text-lg text-cynthia-green-dark">
-                    <span>Total:</span>
+                    <span>Total Final:</span>
                     <span>{formatCurrency(selectedPedido.total_centavos)}</span>
                   </div>
                 </div>
@@ -773,7 +937,7 @@ export default function PedidosPage() {
 
                     {selectedPedido.observacoes && (
                       <div>
-                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">Observações</h4>
+                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">Observações do Pedido</h4>
                         <p className="text-sm text-cynthia-green-dark bg-cynthia-green-leaf/5 p-3 rounded">
                           {selectedPedido.observacoes}
                         </p>
@@ -789,4 +953,3 @@ export default function PedidosPage() {
     </div>
   )
 }
-//

@@ -13,12 +13,22 @@ export interface Endereco {
   ponto_referencia?: string
 }
 
+export interface Acompanhamento {
+  id: number
+  quantidade: number
+  preco_centavos: number
+  nome_acompanhamento: string
+}
+
 export interface ItemPedido {
   id: number
-  produto_id: number
   quantidade: number
+  tamanho_ml: number
+  observacoes: string | null
+  nome_produto: string
+  acompanhamentos: Acompanhamento[]
+  subtotal_centavos: number
   preco_unitario_centavos: number
-  observacoes?: string
 }
 
 export interface Pedido {
