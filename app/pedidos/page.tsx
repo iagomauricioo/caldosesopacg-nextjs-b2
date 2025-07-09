@@ -548,10 +548,20 @@ export default function PedidosPage() {
                         <div key={index} className="bg-white p-3 rounded-lg border border-cynthia-orange-pumpkin/10">
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
-                              <h5 className="font-medium text-cynthia-green-dark">{item.nome_produto}</h5>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h5 className="font-medium text-cynthia-green-dark">{item.nome_produto}</h5>
+                                <Badge className="bg-cynthia-orange-pumpkin text-white font-bold text-xs">
+                                  {item.tamanho_ml}ml
+                                </Badge>
+                              </div>
                               <div className="flex items-center gap-4 text-sm text-cynthia-green-dark/70 mt-1">
                                 <span>Quantidade: {item.quantidade}</span>
-                                <span>Tamanho: {item.tamanho_ml}ml</span>
+                                <span>
+                                  Tamanho:{" "}
+                                  <strong className="text-cynthia-green-dark bg-cynthia-yellow-mustard/30 px-2 py-1 rounded font-bold">
+                                    {item.tamanho_ml}ml
+                                  </strong>
+                                </span>
                                 <span>Unitário: {formatCurrency(item.preco_unitario_centavos)}</span>
                               </div>
                             </div>
@@ -827,13 +837,21 @@ export default function PedidosPage() {
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
-                            <h5 className="font-semibold text-cynthia-green-dark text-lg">{item.nome_produto}</h5>
+                            <div className="flex items-center gap-3">
+                              <h5 className="font-semibold text-cynthia-green-dark text-lg">{item.nome_produto}</h5>
+                              <Badge className="bg-cynthia-orange-pumpkin text-white font-bold text-sm">
+                                {item.tamanho_ml}ml
+                              </Badge>
+                            </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-cynthia-green-dark/70 mt-2">
                               <div>
                                 <span className="font-medium">Quantidade:</span> {item.quantidade}
                               </div>
                               <div>
-                                <span className="font-medium">Tamanho:</span> {item.tamanho_ml}ml
+                                <span className="font-medium">Tamanho:</span>
+                                <span className="text-cynthia-green-dark bg-cynthia-yellow-mustard/40 px-3 py-1 rounded-md font-bold text-base ml-1">
+                                  {item.tamanho_ml}ml
+                                </span>
                               </div>
                               <div>
                                 <span className="font-medium">Unitário:</span>{" "}
@@ -953,4 +971,3 @@ export default function PedidosPage() {
     </div>
   )
 }
-//
