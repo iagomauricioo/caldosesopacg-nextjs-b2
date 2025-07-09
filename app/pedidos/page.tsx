@@ -27,6 +27,7 @@ import {
   FileText,
   ShoppingBag,
   Plus,
+  MessageCircle,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -158,6 +159,68 @@ const paymentStatusConfig = {
   },
 }
 
+const formatCurrency = (centavos: number) => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(centavos / 100)
+}
+
+const formatDate = (dateString: string) => {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateString))
+}
+
+const openWhatsApp = (telefone: string, pedido: Pedido) => {
+  // Remove todos os caracteres não numéricos
+  const cleanPhone = telefone.replace(/\D/g, "")
+
+  // Adiciona o código do país (55) se não estiver presente
+  const phoneWithCountryCode = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`
+
+  // Mensagem contextual baseada no status
+  const getStatusMessage = (status: Pedido["status"]) => {
+    switch (status) {
+      case "recebido":
+        return `✅ Seu pedido foi recebido e está sendo preparado!`
+      case "preparando":
+        return `👨‍🍳 Seu pedido está sendo preparado com muito carinho!`
+      case "saiu_entrega":
+        return `🚚 Seu pedido saiu para entrega! Em breve estará aí!`
+      case "entregue":
+        return `🎉 Esperamos que tenha gostado do seu pedido!`
+      case "cancelado":
+        return `😔 Sobre o cancelamento do seu pedido...`
+      default:
+        return `📋 Sobre o seu pedido...`
+    }
+  }
+
+  // Mensagem personalizada e contextual
+  const message = `Olá, ${pedido.cliente.nome}! 👋
+
+Sou da equipe dos *Caldos da Cynthia* 🍲
+
+${getStatusMessage(pedido.status)}
+
+*Pedido #${pedido.id}*
+📅 ${formatDate(pedido.data_pedido)}
+💰 Total: ${formatCurrency(pedido.total_centavos)}
+
+Como posso ajudá-lo(a)? 😊`
+
+  // URL do WhatsApp
+  const whatsappUrl = `https://wa.me/${phoneWithCountryCode}?text=${encodeURIComponent(message)}`
+
+  // Abrir em nova aba
+  window.open(whatsappUrl, "_blank")
+}
+
 export default function PedidosPage() {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [filteredPedidos, setFilteredPedidos] = useState<Pedido[]>([])
@@ -276,23 +339,6 @@ export default function PedidosPage() {
 
     setFilteredPedidos(filtered)
   }, [pedidos, searchTerm, statusFilter, paymentFilter, paymentStatusFilter])
-
-  const formatCurrency = (centavos: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(centavos / 100)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(dateString))
-  }
 
   const formatPhone = (phone: string) => {
     const cleaned = phone.replace(/\D/g, "")
@@ -505,7 +551,18 @@ export default function PedidosPage() {
                     </div>
                     <div>
                       <p className="text-cynthia-green-dark/70">Telefone</p>
-                      <p className="font-medium text-cynthia-green-dark">{formatPhone(pedido.cliente.telefone)}</p>
+                      <div className="flex items-center gap-3">
+                        <p className="font-medium text-cynthia-green-dark">{formatPhone(pedido.cliente.telefone)}</p>
+                        <Button
+                          size="sm"
+                          onClick={() => openWhatsApp(pedido.cliente.telefone, pedido)}
+                          className="bg-green-500 hover:bg-green-600 text-white h-8 px-3 gap-1 shadow-sm transition-all hover:shadow-md"
+                          title={`Conversar com ${pedido.cliente.nome} no WhatsApp`}
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="text-xs font-medium">WhatsApp</span>
+                        </Button>
+                      </div>
                     </div>
                     <div>
                       <p className="text-cynthia-green-dark/70">CPF</p>
@@ -558,7 +615,7 @@ export default function PedidosPage() {
                                 <span>Quantidade: {item.quantidade}</span>
                                 <span>
                                   Tamanho:{" "}
-                                  <strong className="text-cynthia-green-dark bg-cynthia-yellow-mustard/30 px-2 py-1 rounded font-bold">
+                                  <strong className="text-cynthia-green-dark bg-cynthia-yellow-mustard/30 px-2 py-1 rounded font-bold text-base ml-1">
                                     {item.tamanho_ml}ml
                                   </strong>
                                 </span>
@@ -566,7 +623,7 @@ export default function PedidosPage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-semibold text-cynthia-green-dark">
+                              <p className="font-semibold text-lg text-cynthia-green-dark">
                                 {formatCurrency(calculateItemTotal(item))}
                               </p>
                             </div>
@@ -581,7 +638,7 @@ export default function PedidosPage() {
                           {item.acompanhamentos.length > 0 && (
                             <div className="mt-2">
                               <p className="text-sm font-medium text-cynthia-green-dark mb-1 flex items-center gap-1">
-                                <Plus className="w-3 h-3" />
+                                <Plus className="w-4 h-4" />
                                 Acompanhamentos:
                               </p>
                               <div className="space-y-1">
@@ -760,9 +817,20 @@ export default function PedidosPage() {
                     </div>
                     <div>
                       <p className="text-sm text-cynthia-green-dark/70">Telefone</p>
-                      <p className="font-medium text-cynthia-green-dark">
-                        {formatPhone(selectedPedido.cliente.telefone)}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <p className="font-medium text-cynthia-green-dark">
+                          {formatPhone(selectedPedido.cliente.telefone)}
+                        </p>
+                        <Button
+                          size="sm"
+                          onClick={() => openWhatsApp(selectedPedido.cliente.telefone, selectedPedido)}
+                          className="bg-green-500 hover:bg-green-600 text-white h-9 px-4 gap-2 shadow-sm transition-all hover:shadow-md hover:scale-105"
+                          title={`Conversar com ${selectedPedido.cliente.nome} no WhatsApp`}
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">Conversar</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -872,97 +940,13 @@ export default function PedidosPage() {
 
                         {item.observacoes && (
                           <div className="bg-cynthia-green-leaf/10 p-3 rounded text-sm text-cynthia-green-dark mb-3">
-                            <strong>Observações:</strong> {item.observacoes}
-                          </div>
-                        )}
-
-                        {item.acompanhamentos.length > 0 && (
-                          <div>
-                            <p className="text-sm font-semibold text-cynthia-green-dark mb-2 flex items-center gap-1">
-                              <Plus className="w-4 h-4" />
-                              Acompanhamentos:
-                            </p>
-                            <div className="grid gap-2">
-                              {item.acompanhamentos.map((acomp, acompIndex) => (
-                                <div
-                                  key={acompIndex}
-                                  className="flex justify-between items-center bg-cynthia-yellow-mustard/10 p-3 rounded border border-cynthia-yellow-mustard/20"
-                                >
-                                  <div>
-                                    <span className="font-medium text-cynthia-green-dark">
-                                      {acomp.nome_acompanhamento}
-                                    </span>
-                                    <p className="text-sm text-cynthia-green-dark/70">
-                                      Quantidade: {acomp.quantidade} | Unitário: {formatCurrency(acomp.preco_centavos)}
-                                    </p>
-                                  </div>
-                                  <span className="font-semibold text-cynthia-green-dark">
-                                    {formatCurrency(acomp.preco_centavos * acomp.quantidade)}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
+                            <strong>Obs:</strong> {item.observacoes}
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
                 </div>
-              )}
-
-              <Separator className="border-cynthia-green-dark/20" />
-
-              {/* Valores Detalhados */}
-              <div>
-                <h4 className="font-semibold mb-3 text-cynthia-green-dark">Resumo Financeiro</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-cynthia-green-dark">
-                    <span>Subtotal dos Itens:</span>
-                    <span className="font-medium">{formatCurrency(selectedPedido.subtotal_centavos)}</span>
-                  </div>
-                  <div className="flex justify-between text-cynthia-green-dark">
-                    <span>Taxa de Entrega:</span>
-                    <span className="font-medium">{formatCurrency(selectedPedido.taxa_entrega_centavos)}</span>
-                  </div>
-                  <Separator className="border-cynthia-green-dark/20" />
-                  <div className="flex justify-between font-bold text-lg text-cynthia-green-dark">
-                    <span>Total Final:</span>
-                    <span>{formatCurrency(selectedPedido.total_centavos)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Informações Adicionais */}
-              {(selectedPedido.pagamento_id || selectedPedido.data_entrega || selectedPedido.observacoes) && (
-                <>
-                  <Separator className="border-cynthia-green-dark/20" />
-                  <div className="space-y-4">
-                    {selectedPedido.pagamento_id && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">ID do Pagamento</h4>
-                        <p className="text-sm font-mono text-cynthia-green-dark bg-gray-50 p-2 rounded">
-                          {selectedPedido.pagamento_id}
-                        </p>
-                      </div>
-                    )}
-
-                    {selectedPedido.data_entrega && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">Data de Entrega</h4>
-                        <p className="text-sm text-cynthia-green-dark">{formatDate(selectedPedido.data_entrega)}</p>
-                      </div>
-                    )}
-
-                    {selectedPedido.observacoes && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-cynthia-green-dark">Observações do Pedido</h4>
-                        <p className="text-sm text-cynthia-green-dark bg-cynthia-green-leaf/5 p-3 rounded">
-                          {selectedPedido.observacoes}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </>
               )}
             </CardContent>
           </Card>
