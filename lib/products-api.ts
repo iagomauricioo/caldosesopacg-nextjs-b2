@@ -1,18 +1,4 @@
-"use client"
-import { Suspense } from "react"
-import { Header } from "@/components/header"
-import { PageLoadingSkeleton } from "@/components/loading-states"
-import { ErrorBoundary, DefaultErrorFallback } from "@/components/error-boundary"
 import type { Product } from "@/types/product"
-import { Footer } from "@/components/footer"
-import { MobileNavbar } from "@/components/mobile-navbar"
-import { FloatingLeaves } from "@/components/animations/floating-leaves"
-import { HeroSection } from "@/components/home/hero-section"
-import { PromotionAlert } from "@/components/home/promotion-alert"
-import { ProductsSection } from "@/components/home/products-section"
-import { WhyChooseUsSection } from "@/components/home/why-choose-us-section"
-import { CTASection } from "@/components/home/cta-section"
-import { getProducts } from "@/lib/products-api"
 
 // Mock data baseado na sua API
 const mockProducts: Product[] = [
@@ -90,39 +76,25 @@ const mockProducts: Product[] = [
   },
 ]
 
-export default async function HomePage() {
-  const { products, error } = await getProducts()
+export async function getProducts(): Promise<{ products: Product[]; error?: string }> {
+  try {
+    const response = await fetch("https://api.caldosesopacg.com/api/v1/produtos", {
+      next: { revalidate: 300 }, // Revalidate every 5 minutes
+    })
 
-  return (
-    <ErrorBoundary fallback={DefaultErrorFallback}>
-      <div className="min-h-screen bg-cynthia-cream">
-        <FloatingLeaves />
-        <Header />
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
 
-        <HeroSection />
-        <PromotionAlert />
+    const responseJson = await response.json()
+    const products = responseJson.data || []
 
-        {error && (
-          <section className="container mx-auto px-4 pb-4">
-            <div className="border-yellow-400 bg-yellow-50 border rounded-lg p-4">
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 text-yellow-600">ℹ️</div>
-                <p className="text-yellow-800">{error}</p>
-              </div>
-            </div>
-          </section>
-        )}
-
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <ProductsSection products={products} />
-        </Suspense>
-
-        <WhyChooseUsSection />
-        <CTASection />
-
-        <Footer />
-        <MobileNavbar />
-      </div>
-    </ErrorBoundary>
-  )
+    return { products }
+  } catch (error) {
+    console.error("Erro ao carregar produtos da API, usando dados mockados:", error)
+    return {
+      products: mockProducts,
+      error: "Usando dados de exemplo - API indisponível",
+    }
+  }
 }
