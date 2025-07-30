@@ -5,20 +5,38 @@ import { useCart } from "@/contexts/cart-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CreditCard } from "lucide-react"
-import { PaymentForm } from "@/components/payment-form"
+import PaymentForm from "@/components/payment-form"
+
+interface CartItem {
+  id: string
+  name: string
+  price: number
+  quantity: number
+  observations?: string
+}
 
 interface PaymentFormContainerProps {
   clientId: string | null
+  items: CartItem[]
+  total: number
+  onComplete: (orderId: string) => void
 }
 
-export function PaymentFormContainer({ clientId }: PaymentFormContainerProps) {
-  const { state, dispatch } = useCart()
+export function PaymentFormContainer({ clientId, items, total, onComplete }: PaymentFormContainerProps) {
+  const { dispatch } = useCart()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const handlePaymentComplete = () => {
-    // Limpar carrinho e redirecionar
-    dispatch({ type: "CLEAR_CART" })
+  const handlePaymentSuccess = () => {
+    startTransition(() => {
+      // Simular criação do pedido
+      const orderId = `order_${Date.now()}`
+
+      // Limpar carrinho
+      dispatch({ type: "CLEAR_CART" })
+
+      onComplete(orderId)
+    })
   }
 
   if (!clientId) {
@@ -46,7 +64,20 @@ export function PaymentFormContainer({ clientId }: PaymentFormContainerProps) {
           </Alert>
         )}
 
-        <PaymentForm clientId={clientId} onPaymentComplete={handlePaymentComplete} isLoading={isPending} />
+        <PaymentForm
+          clientData={{
+            nome: "Cliente Teste",
+            telefone: "(82) 99999-9999",
+            endereco: {
+              rua: "Rua Teste",
+              numero: "123",
+              bairro: "Centro",
+              cidade: "São Miguel dos Campos",
+              cep: "57240-000",
+            },
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       </CardContent>
     </Card>
   )

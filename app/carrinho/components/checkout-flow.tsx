@@ -1,152 +1,119 @@
 "use client"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { User, CreditCard, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, User, CreditCard, CheckCircle } from "lucide-react"
 import { ClientFormContainer } from "./client-form-container"
 import { PaymentFormContainer } from "./payment-form-container"
 import { OrderConfirmation } from "./order-confirmation"
 
-type CheckoutStep = "client" | "payment" | "confirmation"
-
-interface CheckoutFlowProps {
-  currentStep: CheckoutStep
-  onStepChange: (step: CheckoutStep) => void
-  clientId: string | null
-  onClientSaved: (id: string) => void
+interface CartItem {
+  id: string
+  name: string
+  price: number
+  quantity: number
+  observations?: string
 }
 
-export function CheckoutFlow({ currentStep, onStepChange, clientId, onClientSaved }: CheckoutFlowProps) {
+interface CheckoutFlowProps {
+  onBack: () => void
+  items: CartItem[]
+  total: number
+}
+
+type CheckoutStep = "client" | "payment" | "confirmation"
+
+export function CheckoutFlow({ onBack, items, total }: CheckoutFlowProps) {
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>("client")
+  const [clientId, setClientId] = useState<string | null>(null)
+  const [orderId, setOrderId] = useState<string | null>(null)
+
+  const handleClientComplete = (id: string) => {
+    setClientId(id)
+    setCurrentStep("payment")
+  }
+
+  const handlePaymentComplete = (id: string) => {
+    setOrderId(id)
+    setCurrentStep("confirmation")
+  }
+
   const steps = [
-    { id: "client", label: "Cliente", icon: User },
-    { id: "payment", label: "Pagamento", icon: CreditCard },
-    { id: "confirmation", label: "Confirmação", icon: CheckCircle },
+    { id: "client", label: "Dados", icon: User, active: currentStep === "client", completed: !!clientId },
+    { id: "payment", label: "Pagamento", icon: CreditCard, active: currentStep === "payment", completed: !!orderId },
+    {
+      id: "confirmation",
+      label: "Confirmação",
+      icon: CheckCircle,
+      active: currentStep === "confirmation",
+      completed: false,
+    },
   ]
 
-  const currentStepIndex = steps.findIndex((step) => step.id === currentStep)
-  const progress = ((currentStepIndex + 1) / steps.length) * 100
-
-  const canProceedToNext = () => {
-    switch (currentStep) {
-      case "client":
-        return !!clientId
-      case "payment":
-        return true // Implementar validação de pagamento
-      default:
-        return false
-    }
-  }
-
-  const handleNext = () => {
-    const nextIndex = Math.min(steps.length - 1, currentStepIndex + 1)
-    onStepChange(steps[nextIndex].id as CheckoutStep)
-  }
-
-  const handlePrevious = () => {
-    const prevIndex = Math.max(0, currentStepIndex - 1)
-    onStepChange(steps[prevIndex].id as CheckoutStep)
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          {steps.map((step, index) => {
-            const StepIcon = step.icon
-            const isActive = step.id === currentStep
-            const isCompleted = index < currentStepIndex
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header com navegação */}
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={onBack} className="text-cynthia-green-dark hover:text-cynthia-green-dark/80">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar ao Carrinho
+        </Button>
 
-            return (
-              <div
-                key={step.id}
-                className={`flex items-center gap-2 ${
-                  isActive
-                    ? "text-cynthia-green-dark font-semibold"
-                    : isCompleted
-                      ? "text-cynthia-green-leaf"
-                      : "text-gray-400"
-                }`}
-              >
-                <div
-                  className={`p-2 rounded-full ${
-                    isActive
-                      ? "bg-cynthia-green-dark text-white"
-                      : isCompleted
-                        ? "bg-cynthia-green-leaf text-white"
-                        : "bg-gray-200"
-                  }`}
-                >
-                  <StepIcon className="w-4 h-4" />
-                </div>
-                <span className="hidden sm:inline">{step.label}</span>
-              </div>
-            )
-          })}
-        </div>
-        <Progress value={progress} className="h-2" />
+        <h1 className="text-2xl font-bold text-cynthia-green-dark">Finalizar Pedido</h1>
       </div>
 
-      {/* Step Content */}
-      <Tabs value={currentStep} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-cynthia-cream/50">
-          {steps.map((step, index) => {
-            const StepIcon = step.icon
-            const isCompleted = index < currentStepIndex
-
-            return (
-              <TabsTrigger
-                key={step.id}
-                value={step.id}
-                disabled={index > currentStepIndex}
-                className="data-[state=active]:bg-cynthia-green-dark data-[state=active]:text-white"
+      {/* Indicador de progresso */}
+      <div className="flex items-center justify-center space-x-8 py-4">
+        {steps.map((step, index) => {
+          const Icon = step.icon
+          return (
+            <div key={step.id} className="flex items-center">
+              <div
+                className={`
+                flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
+                ${
+                  step.active
+                    ? "border-cynthia-green-dark bg-cynthia-green-dark text-white"
+                    : step.completed
+                      ? "border-cynthia-green-leaf bg-cynthia-green-leaf text-white"
+                      : "border-gray-300 bg-white text-gray-400"
+                }
+              `}
               >
-                <div className="flex items-center gap-2">
-                  {isCompleted ? (
-                    <CheckCircle className="w-4 h-4 text-cynthia-green-leaf" />
-                  ) : (
-                    <StepIcon className="w-4 h-4" />
-                  )}
-                  <span className="hidden sm:inline">{step.label}</span>
-                </div>
-              </TabsTrigger>
-            )
-          })}
-        </TabsList>
+                <Icon className="w-5 h-5" />
+              </div>
+              <span
+                className={`
+                ml-2 text-sm font-medium
+                ${
+                  step.active ? "text-cynthia-green-dark" : step.completed ? "text-cynthia-green-leaf" : "text-gray-400"
+                }
+              `}
+              >
+                {step.label}
+              </span>
+              {index < steps.length - 1 && (
+                <div
+                  className={`
+                  w-16 h-px mx-4 transition-colors
+                  ${step.completed ? "bg-cynthia-green-leaf" : "bg-gray-300"}
+                `}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
 
-        <TabsContent value="client" className="space-y-6">
-          <ClientFormContainer onClientSaved={onClientSaved} />
-        </TabsContent>
+      {/* Conteúdo do passo atual */}
+      <div className="min-h-[400px]">
+        {currentStep === "client" && <ClientFormContainer onComplete={handleClientComplete} />}
 
-        <TabsContent value="payment" className="space-y-6">
-          <PaymentFormContainer clientId={clientId} />
-        </TabsContent>
+        {currentStep === "payment" && (
+          <PaymentFormContainer clientId={clientId} items={items} total={total} onComplete={handlePaymentComplete} />
+        )}
 
-        <TabsContent value="confirmation" className="space-y-6">
-          <OrderConfirmation />
-        </TabsContent>
-      </Tabs>
-
-      {/* Navigation */}
-      <div className="flex justify-between mt-6">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentStepIndex === 0}
-          className="border-cynthia-yellow-mustard/50 bg-transparent"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
-
-        <Button
-          onClick={handleNext}
-          disabled={!canProceedToNext() || currentStepIndex === steps.length - 1}
-          className="bg-cynthia-green-dark hover:bg-cynthia-green-dark/80"
-        >
-          Próximo
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+        {currentStep === "confirmation" && <OrderConfirmation orderId={orderId} />}
       </div>
     </div>
   )

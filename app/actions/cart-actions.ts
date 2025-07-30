@@ -3,13 +3,12 @@
 import { revalidatePath } from "next/cache"
 
 export interface CartItem {
-  productId: number
-  variationSize: number
+  id: string
+  name: string
+  price: number
   quantity: number
-  productName: string
-  variationName: string
-  priceInCents: number
-  imageUrl?: string
+  observations?: string
+  image?: string
 }
 
 export interface ClientData {
@@ -20,13 +19,101 @@ export interface ClientData {
     rua: string
     numero: string
     bairro: string
+    cidade: string
     cep: string
     complemento?: string
-    pontoReferencia?: string
   }
 }
 
-export interface OrderData {
+export async function validateCEP(cep: string) {
+  try {
+    const cleanCEP = cep.replace(/\D/g, "")
+    const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`)
+
+    if (!response.ok) {
+      throw new Error("CEP não encontrado")
+    }
+
+    const data = await response.json()
+
+    if (data.erro) {
+      throw new Error("CEP inválido")
+    }
+
+    return {
+      success: true,
+      data: {
+        cep: data.cep,
+        logradouro: data.logradouro,
+        bairro: data.bairro,
+        localidade: data.localidade,
+        uf: data.uf,
+      },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro ao validar CEP",
+    }
+  }
+}
+
+export async function calculateDeliveryFee(cep: string) {
+  // Simular cálculo de taxa de entrega
+  const cleanCEP = cep.replace(/\D/g, "")
+
+  // CEPs de São Miguel dos Campos - entrega grátis
+  const freeCEPs = ["57240", "57241", "57242"]
+  const isFree = freeCEPs.some((prefix) => cleanCEP.startsWith(prefix))
+
+  return {
+    fee: isFree ? 0 : 500, // R$ 5,00 em centavos
+    isFree,
+  }
+}
+
+export async function createPixPayment(orderData: {
+  value: number
+  description: string
+  externalReference: string
+}) {
+  try {
+    const response = await fetch("https://api.caldosesopacg.com/api/v1/cobranca/pix/qrCode/estatico", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        description: orderData.description,
+        value: orderData.value,
+        expirationSeconds: 300,
+        externalReference: orderData.externalReference,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`)
+    }
+
+    const result = await response.json()
+
+    if (!result.success) {
+      throw new Error(result.message || "Erro ao gerar PIX")
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro ao gerar PIX",
+    }
+  }
+}
+
+export async function submitOrder(orderData: {
   cliente: {
     nome: string
     telefone: string
@@ -34,7 +121,7 @@ export interface OrderData {
   }
   endereco: ClientData["endereco"]
   itens: Array<{
-    produto_id: number
+    produto_id: string
     quantidade: number
     preco_unitario_centavos: number
     observacoes?: string
@@ -46,113 +133,7 @@ export interface OrderData {
   troco_para_centavos?: number
   observacoes?: string
   pagamento_id?: string
-}
-
-export async function searchClientByPhone(telefone: string) {
-  try {
-    const cleanPhone = telefone.replace(/\D/g, "")
-    const response = await fetch(`https://api.caldosesopacg.com/api/v1/clientes/${cleanPhone}`)
-
-    if (response.ok) {
-      const data = await response.json()
-      return { success: true, data: data.data }
-    } else {
-      return { success: false, data: null }
-    }
-  } catch (error) {
-    console.error("Erro ao buscar cliente:", error)
-    return { success: false, data: null, error: "Erro ao buscar cliente" }
-  }
-}
-
-export async function searchClientAddress(telefone: string) {
-  try {
-    const cleanPhone = telefone.replace(/\D/g, "")
-    const response = await fetch(`https://api.caldosesopacg.com/api/v1/clientes/${cleanPhone}/endereco`)
-
-    if (response.ok) {
-      const data = await response.json()
-      return { success: true, data }
-    } else {
-      return { success: false, data: null }
-    }
-  } catch (error) {
-    console.error("Erro ao buscar endereço:", error)
-    return { success: false, data: null, error: "Erro ao buscar endereço" }
-  }
-}
-
-export async function createClient(clientData: ClientData) {
-  try {
-    const payload = {
-      nome: clientData.nome,
-      cpf: clientData.cpf?.replace(/\D/g, "") || null,
-      telefone: clientData.telefone.replace(/\D/g, ""),
-      endereco: {
-        rua: clientData.endereco.rua,
-        complemento: clientData.endereco.complemento || "",
-        numero: clientData.endereco.numero,
-        bairro: clientData.endereco.bairro,
-        pontoReferencia: clientData.endereco.pontoReferencia || "",
-        cep: clientData.endereco.cep.replace(/\D/g, ""),
-      },
-    }
-
-    const response = await fetch("https://api.caldosesopacg.com/api/v1/clientes", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao cadastrar cliente")
-    }
-
-    const data = await response.json()
-    return { success: true, data: data.data }
-  } catch (error) {
-    console.error("Erro ao criar cliente:", error)
-    return { success: false, error: "Erro ao cadastrar cliente" }
-  }
-}
-
-export async function generatePixPayment(value: number, externalReference: string) {
-  try {
-    const pixPayload = {
-      description: "Pedido Caldos da Cynthia",
-      value: Math.round(value),
-      expirationSeconds: 300, // 5 minutos
-      externalReference,
-    }
-
-    const response = await fetch("https://api.caldosesopacg.com/api/v1/cobranca/pix/qrCode/estatico", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(pixPayload),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`)
-    }
-
-    const result = await response.json()
-
-    if (result.success && result.data) {
-      return { success: true, data: result.data }
-    } else {
-      throw new Error(result.message || "Erro ao gerar PIX")
-    }
-  } catch (error) {
-    console.error("Erro ao gerar PIX:", error)
-    return { success: false, error: "Erro ao gerar PIX" }
-  }
-}
-
-export async function submitOrder(orderData: OrderData) {
+}) {
   try {
     const response = await fetch("https://api.caldosesopacg.com/api/v1/pedidos", {
       method: "POST",
@@ -168,13 +149,16 @@ export async function submitOrder(orderData: OrderData) {
 
     const result = await response.json()
 
-    // Revalidar páginas relacionadas
     revalidatePath("/pedidos")
-    revalidatePath("/carrinho")
 
-    return { success: true, data: result }
+    return {
+      success: true,
+      data: result,
+    }
   } catch (error) {
-    console.error("Erro ao enviar pedido:", error)
-    return { success: false, error: "Erro ao enviar pedido" }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro ao enviar pedido",
+    }
   }
 }
