@@ -3,38 +3,50 @@
 import { useCart } from "@/contexts/cart-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingCart } from "lucide-react"
+import { Receipt } from "lucide-react"
 
 export function CartSummary() {
-  const { getSubtotal, getTotal, getItemCount } = useCart()
+  const { state } = useCart()
 
-  const subtotal = getSubtotal()
-  const deliveryFee = 500 // R$ 5,00 em centavos
-  const total = getTotal()
+  if (!state || !state.items) {
+    return null
+  }
+
+  const subtotal = state.items.reduce((total, item) => {
+    return total + item.preco_centavos * item.quantidade
+  }, 0)
+
+  const frete = subtotal >= 3000 ? 0 : 500 // Frete grátis acima de R$ 30
+  const total = subtotal + frete
 
   return (
-    <Card className="border-cynthia-yellow-mustard/30 sticky top-4">
+    <Card className="sticky top-4">
       <CardHeader>
-        <CardTitle className="text-cynthia-green-dark flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-cynthia-green-dark">
+          <Receipt className="w-5 h-5" />
           Resumo do Pedido
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <div className="flex justify-between text-cynthia-green-dark">
-            <span>Itens ({getItemCount()}):</span>
+          <div className="flex justify-between">
+            <span>Subtotal</span>
             <span>R$ {(subtotal / 100).toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-cynthia-green-dark">
-            <span>Taxa de entrega:</span>
-            <span>R$ {(deliveryFee / 100).toFixed(2)}</span>
+          <div className="flex justify-between">
+            <span>Frete</span>
+            <span className={frete === 0 ? "text-green-600 font-medium" : ""}>
+              {frete === 0 ? "Grátis" : `R$ ${(frete / 100).toFixed(2)}`}
+            </span>
           </div>
-          <Separator />
-          <div className="flex justify-between text-lg font-bold text-cynthia-green-dark">
-            <span>Total:</span>
-            <span>R$ {(total / 100).toFixed(2)}</span>
-          </div>
+          {frete === 0 && <p className="text-sm text-green-600">🎉 Você ganhou frete grátis!</p>}
+        </div>
+
+        <Separator />
+
+        <div className="flex justify-between text-lg font-bold text-cynthia-green-dark">
+          <span>Total</span>
+          <span>R$ {(total / 100).toFixed(2)}</span>
         </div>
       </CardContent>
     </Card>
