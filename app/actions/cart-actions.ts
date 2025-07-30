@@ -4,161 +4,108 @@ import { revalidatePath } from "next/cache"
 
 export interface CartItem {
   id: string
-  name: string
-  price: number
+  productId: number
+  variationSize: number
   quantity: number
-  observations?: string
-  image?: string
-}
-
-export interface ClientData {
-  nome: string
-  telefone: string
-  cpf?: string
-  endereco: {
-    rua: string
-    numero: string
-    bairro: string
-    cidade: string
-    cep: string
-    complemento?: string
-  }
-}
-
-export async function validateCEP(cep: string) {
-  try {
-    const cleanCEP = cep.replace(/\D/g, "")
-    const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`)
-
-    if (!response.ok) {
-      throw new Error("CEP não encontrado")
-    }
-
-    const data = await response.json()
-
-    if (data.erro) {
-      throw new Error("CEP inválido")
-    }
-
-    return {
-      success: true,
-      data: {
-        cep: data.cep,
-        logradouro: data.logradouro,
-        bairro: data.bairro,
-        localidade: data.localidade,
-        uf: data.uf,
-      },
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Erro ao validar CEP",
-    }
-  }
-}
-
-export async function calculateDeliveryFee(cep: string) {
-  // Simular cálculo de taxa de entrega
-  const cleanCEP = cep.replace(/\D/g, "")
-
-  // CEPs de São Miguel dos Campos - entrega grátis
-  const freeCEPs = ["57240", "57241", "57242"]
-  const isFree = freeCEPs.some((prefix) => cleanCEP.startsWith(prefix))
-
-  return {
-    fee: isFree ? 0 : 500, // R$ 5,00 em centavos
-    isFree,
-  }
-}
-
-export async function createPixPayment(orderData: {
-  value: number
-  description: string
-  externalReference: string
-}) {
-  try {
-    const response = await fetch("https://api.caldosesopacg.com/api/v1/cobranca/pix/qrCode/estatico", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        description: orderData.description,
-        value: orderData.value,
-        expirationSeconds: 300,
-        externalReference: orderData.externalReference,
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`)
-    }
-
-    const result = await response.json()
-
-    if (!result.success) {
-      throw new Error(result.message || "Erro ao gerar PIX")
-    }
-
-    return {
-      success: true,
-      data: result.data,
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Erro ao gerar PIX",
-    }
-  }
-}
-
-export async function submitOrder(orderData: {
-  cliente: {
+  product: {
+    id: number
     nome: string
-    telefone: string
-    cpf?: string
+    descricao: string
+    imagem_url?: string
   }
-  endereco: ClientData["endereco"]
-  itens: Array<{
-    produto_id: string
-    quantidade: number
-    preco_unitario_centavos: number
-    observacoes?: string
-  }>
-  subtotal_centavos: number
-  taxa_entrega_centavos: number
-  total_centavos: number
-  forma_pagamento: "PIX" | "CREDIT_CARD" | "DINHEIRO"
-  troco_para_centavos?: number
-  observacoes?: string
-  pagamento_id?: string
-}) {
+  variation: {
+    tamanho_ml: number
+    nome_tamanho: string
+    preco_centavos: number
+  }
+}
+
+export interface CartState {
+  items: CartItem[]
+}
+
+// Simular operações de carrinho no servidor
+export async function addToCartAction(productId: number, variationSize: number, quantity = 1) {
   try {
-    const response = await fetch("https://api.caldosesopacg.com/api/v1/pedidos", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orderData),
-    })
+    // Aqui você implementaria a lógica real de adicionar ao carrinho
+    // Por exemplo, salvar no banco de dados ou session
 
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`)
-    }
+    console.log(`Adding to cart: Product ${productId}, Size ${variationSize}, Quantity ${quantity}`)
 
-    const result = await response.json()
+    // Revalidar a página do carrinho
+    revalidatePath("/carrinho")
 
-    revalidatePath("/pedidos")
+    return { success: true, message: "Item adicionado ao carrinho" }
+  } catch (error) {
+    console.error("Error adding to cart:", error)
+    return { success: false, message: "Erro ao adicionar item ao carrinho" }
+  }
+}
+
+export async function updateCartItemAction(productId: number, variationSize: number, quantity: number) {
+  try {
+    // Implementar lógica de atualização
+    console.log(`Updating cart item: Product ${productId}, Size ${variationSize}, New Quantity ${quantity}`)
+
+    revalidatePath("/carrinho")
+
+    return { success: true, message: "Quantidade atualizada" }
+  } catch (error) {
+    console.error("Error updating cart item:", error)
+    return { success: false, message: "Erro ao atualizar item" }
+  }
+}
+
+export async function removeFromCartAction(productId: number, variationSize: number) {
+  try {
+    // Implementar lógica de remoção
+    console.log(`Removing from cart: Product ${productId}, Size ${variationSize}`)
+
+    revalidatePath("/carrinho")
+
+    return { success: true, message: "Item removido do carrinho" }
+  } catch (error) {
+    console.error("Error removing from cart:", error)
+    return { success: false, message: "Erro ao remover item" }
+  }
+}
+
+export async function clearCartAction() {
+  try {
+    // Implementar lógica de limpar carrinho
+    console.log("Clearing cart")
+
+    revalidatePath("/carrinho")
+
+    return { success: true, message: "Carrinho limpo" }
+  } catch (error) {
+    console.error("Error clearing cart:", error)
+    return { success: false, message: "Erro ao limpar carrinho" }
+  }
+}
+
+export async function getCartTotalAction(items: CartItem[]) {
+  try {
+    const subtotal = items.reduce((total, item) => {
+      return total + item.variation.preco_centavos * item.quantity
+    }, 0)
+
+    const deliveryFee = 500 // R$ 5,00 em centavos
+    const total = subtotal + deliveryFee
 
     return {
-      success: true,
-      data: result,
+      subtotal,
+      deliveryFee,
+      total,
+      itemCount: items.reduce((count, item) => count + item.quantity, 0),
     }
   } catch (error) {
+    console.error("Error calculating cart total:", error)
     return {
-      success: false,
-      error: error instanceof Error ? error.message : "Erro ao enviar pedido",
+      subtotal: 0,
+      deliveryFee: 0,
+      total: 0,
+      itemCount: 0,
     }
   }
 }
