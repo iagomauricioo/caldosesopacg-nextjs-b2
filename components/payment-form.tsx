@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
-import { CreditCard, Smartphone, Banknote, Copy, CheckCircle, Clock, QrCode, Info } from "lucide-react"
+import { CreditCard, Smartphone, Banknote, Copy, CheckCircle, Clock, QrCode, Info, Loader2 } from "lucide-react"
 import { useCart } from "@/contexts/cart-context"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
@@ -47,6 +47,32 @@ interface PixResponse {
   timestamp: string
 }
 
+interface CreditCardResponse {
+  success: boolean
+  statusCode: number
+  message: string
+  data: {
+    id: string
+    name: string
+    value: number
+    active: boolean
+    chargeType: string
+    url: string
+    billingType: string
+    subscriptionCycle: null
+    description: string
+    endDate: null
+    deleted: boolean
+    viewCount: number
+    maxInstallmentCount: number
+    dueDateLimitDays: number
+    notificationEnabled: boolean
+    isAddressRequired: null
+    externalReference: null
+  }
+  timestamp: string
+}
+
 export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFormProps) {
   const { state, getSubtotal, getTotal, dispatch } = useCart()
   const { toast } = useToast()
@@ -73,6 +99,76 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
     )
   }
 
+  const handleCreditCardPayment = async () => {
+    console.log("💳 Criando link de pagamento com cartão...")
+    console.log("💰 Valor:", Math.round(totalWithDelivery))
+    console.log("👤 Cliente ID:", clientData.telefone.replace(/\D/g, ""))
+
+    try {
+      setLoading(true)
+
+      const creditCardPayload = {
+        billingType: "CREDIT_CARD",
+        chargeType: "INSTALLMENT",
+        name: "Caldos da Cynthia",
+        description: "Venda de caldos",
+        value: Math.round(totalWithDelivery) / 100,
+        maxInstallmentCount: 1,
+        notificationEnabled: false
+      }
+
+      console.log("📦 Payload Cartão:", creditCardPayload)
+
+      const response = await fetch("http://localhost:8080/api/v1/cobranca/cartao-de-credito", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(creditCardPayload),
+      })
+
+      console.log("📡 Status da resposta:", response.status)
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`)
+      }
+
+      const result: CreditCardResponse = await response.json()
+      console.log("✅ Resposta completa da API:", result)
+
+      if (result.success && result.data) {
+        console.log("🎯 Link de cartão criado com sucesso!")
+        console.log("🆔 ID do pagamento:", result.data.id)
+        console.log("🔗 URL:", result.data.url)
+
+        toast({
+          title: "Link de Pagamento Gerado!",
+          description: "Redirecionando para a página de pagamento...",
+        })
+
+        // Redirecionar para a URL do pagamento
+        window.open(result.data.url, "_blank")
+        
+        // Aguardar um pouco antes de prosseguir
+        setTimeout(() => {
+          dispatch({ type: "CLEAR_CART" })
+          onPaymentSuccess()
+        }, 2000)
+      } else {
+        throw new Error(result.message || "Erro ao gerar link de pagamento")
+      }
+    } catch (error) {
+      console.error("❌ Erro ao gerar link de cartão:", error)
+      toast({
+        title: "Erro no Pagamento",
+        description: "Não foi possível gerar o link de pagamento. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handlePixPayment = async () => {
     console.log("🔥 Criando PIX estático...")
     console.log("💰 Valor:", Math.round(totalWithDelivery))
@@ -83,7 +179,7 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
 
       const pixPayload = {
         description: "Pedido Caldos da Cynthia",
-        value: Math.round(totalWithDelivery),
+        value: Math.round(totalWithDelivery) / 100,
         expirationSeconds: 300, // 5 minutos
         externalReference: clientData.telefone.replace(/\D/g, ""),
       }
@@ -132,29 +228,8 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
     }
   }
 
-  const copyPixCode = async () => {
-    if (pixData?.payload) {
-      try {
-        await navigator.clipboard.writeText(pixData.payload)
-        setPixCopied(true)
-        toast({
-          title: "Código Copiado!",
-          description: "Cole no seu app de pagamentos.",
-        })
-        setTimeout(() => setPixCopied(false), 3000)
-      } catch (error) {
-        console.error("Erro ao copiar:", error)
-        toast({
-          title: "Erro ao Copiar",
-          description: "Não foi possível copiar o código.",
-          variant: "destructive",
-        })
-      }
-    }
-  }
-
-  const handleSubmitOrder = async () => {
-    console.log("🚀 Enviando pedido...")
+  const handleMoneyPayment = async () => {
+    console.log("💵 Processando pagamento em dinheiro...")
     try {
       setLoading(true)
 
@@ -178,7 +253,7 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
         troco_para_centavos:
           paymentMethod === "DINHEIRO" && changeFor ? Math.round(Number.parseFloat(changeFor) * 100) : null,
         observacoes: observations || null,
-        pagamento_id: pixData?.id || null,
+        pagamento_id: null,
       }
 
       console.log("📦 Dados do pedido:", orderData)
@@ -216,6 +291,51 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSubmitOrder = async () => {
+    console.log("🚀 Enviando pedido...")
+    try {
+      setLoading(true)
+
+      if (paymentMethod === "PIX") {
+        await handlePixPayment()
+      } else if (paymentMethod === "CREDIT_CARD") {
+        await handleCreditCardPayment()
+      } else if (paymentMethod === "DINHEIRO") {
+        await handleMoneyPayment()
+      }
+    } catch (error) {
+      console.error("❌ Erro ao processar pagamento:", error)
+      toast({
+        title: "Erro no Pagamento",
+        description: "Não foi possível processar o pagamento. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyPixCode = async () => {
+    if (pixData?.payload) {
+      try {
+        await navigator.clipboard.writeText(pixData.payload)
+        setPixCopied(true)
+        toast({
+          title: "Código Copiado!",
+          description: "Cole no seu app de pagamentos.",
+        })
+        setTimeout(() => setPixCopied(false), 3000)
+      } catch (error) {
+        console.error("Erro ao copiar:", error)
+        toast({
+          title: "Erro ao Copiar",
+          description: "Não foi possível copiar o código.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -310,15 +430,13 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
               <Badge className="bg-cynthia-green-leaf text-white hover:bg-cynthia-green-leaf/90">Recomendado</Badge>
             </div>
 
-            <div className="flex items-center space-x-2 p-4 border-2 rounded-lg opacity-50 border-gray-300 bg-gray-50">
-              <RadioGroupItem value="CREDIT_CARD" id="card" disabled className="border-gray-400" />
-              <Label htmlFor="card" className="flex items-center gap-3 cursor-not-allowed flex-1">
-                <div className="p-2 rounded-full bg-gray-200">
-                  <CreditCard className="w-5 h-5 text-gray-400" />
-                </div>
+            <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors">
+              <RadioGroupItem value="CREDIT_CARD" id="card" className="border-cynthia-green-dark text-cynthia-green-dark" />
+              <Label htmlFor="card" className="flex items-center gap-2 cursor-pointer flex-1">
+                <CreditCard className="w-5 h-5 text-cynthia-green-dark" />
                 <div>
-                  <p className="font-semibold text-gray-400">Cartão de Crédito</p>
-                  <p className="text-sm text-gray-400">Em breve</p>
+                  <p className="font-medium text-cynthia-green-dark">Cartão de Crédito</p>
+                  <p className="text-sm text-muted-foreground">Pagamento seguro</p>
                 </div>
               </Label>
             </div>
@@ -506,17 +624,26 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
           <Button
             onClick={handleSubmitOrder}
             disabled={loading || (paymentMethod === "DINHEIRO" && changeAmount < 0)}
-            className="w-full bg-gradient-to-r from-cynthia-orange-pumpkin to-cynthia-yellow-mustard hover:from-cynthia-orange-pumpkin/90 hover:to-cynthia-yellow-mustard/90 text-white shadow-lg transition-all duration-200"
-            size="lg"
+            className="w-full bg-cynthia-green-dark hover:bg-cynthia-green-dark/80 text-white"
           >
             {loading ? (
               <>
-                <Clock className="w-5 h-5 mr-2 animate-spin" />
-                Enviando Pedido...
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processando...
+              </>
+            ) : paymentMethod === "PIX" ? (
+              <>
+                <Smartphone className="w-4 h-4 mr-2" />
+                Gerar PIX
+              </>
+            ) : paymentMethod === "CREDIT_CARD" ? (
+              <>
+                <CreditCard className="w-4 h-4 mr-2" />
+                Pagar com Cartão
               </>
             ) : (
               <>
-                <CheckCircle className="w-5 h-5 mr-2" />
+                <Banknote className="w-4 h-4 mr-2" />
                 Finalizar Pedido
               </>
             )}
