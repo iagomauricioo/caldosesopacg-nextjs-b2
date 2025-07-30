@@ -1,22 +1,11 @@
 "use client"
 
-import { useState, useTransition } from "react"
 import { useCart } from "@/contexts/cart-context"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Minus, Plus, Trash2, MessageSquare } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
+import { Minus, Plus, Trash2 } from "lucide-react"
 import Image from "next/image"
-
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  observations?: string
-  image?: string
-}
+import type { CartItem, Product } from "@/types/product"
 
 interface CartItemCardProps {
   item: CartItem
@@ -24,146 +13,115 @@ interface CartItemCardProps {
 
 export function CartItemCard({ item }: CartItemCardProps) {
   const { dispatch } = useCart()
-  const { toast } = useToast()
-  const [isPending, startTransition] = useTransition()
-  const [showObservations, setShowObservations] = useState(!!item.observations)
 
-  const updateQuantity = (newQuantity: number) => {
-    if (newQuantity < 1) return
-
-    startTransition(() => {
-      dispatch({
-        type: "UPDATE_QUANTITY",
-        payload: { id: item.id, quantity: newQuantity },
-      })
-    })
+  function getImageUrl(product: Product): string {
+    if (product.imagem_url) return product.imagem_url
+    const imageMap: { [key: number]: string } = {
+      1: "/images/caldos/caldo-de-galinha.png",
+      2: "/images/caldos/caldo-de-kenga.png",
+      3: "/images/caldos/caldo-de-charque.jpeg",
+      4: "/images/caldos/caldo-de-feijao.png",
+      5: "/images/caldos/caldo-de-legumes.jpeg",
+      6: "/images/caldos/creme-de-abobora.jpeg",
+    }
+    return imageMap[product.id] || "/placeholder.svg"
   }
 
-  const removeItem = () => {
-    startTransition(() => {
+  const handleUpdateQuantity = (newQuantity: number) => {
+    if (newQuantity <= 0) {
       dispatch({
         type: "REMOVE_ITEM",
-        payload: { id: item.id },
+        payload: {
+          productId: item.product.id,
+          variationSize: item.variation.tamanho_ml,
+        },
       })
-
-      toast({
-        title: "Item removido",
-        description: `${item.name} foi removido do carrinho.`,
+    } else {
+      dispatch({
+        type: "UPDATE_QUANTITY",
+        payload: {
+          productId: item.product.id,
+          variationSize: item.variation.tamanho_ml,
+          quantity: newQuantity,
+        },
       })
-    })
+    }
   }
 
-  const updateObservations = (observations: string) => {
+  const handleRemoveItem = () => {
     dispatch({
-      type: "UPDATE_OBSERVATIONS",
-      payload: { id: item.id, observations },
+      type: "REMOVE_ITEM",
+      payload: {
+        productId: item.product.id,
+        variationSize: item.variation.tamanho_ml,
+      },
     })
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-4">
-        {/* Imagem do produto */}
-        <div className="flex-shrink-0">
-          <div className="w-16 h-16 bg-cynthia-cream rounded-lg overflow-hidden">
-            {item.image ? (
-              <Image
-                src={item.image || "/placeholder.svg"}
-                alt={item.name}
-                width={64}
-                height={64}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-2xl">🍲</div>
-            )}
-          </div>
-        </div>
-
-        {/* Informações do produto */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-cynthia-green-dark truncate">{item.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(item.price / 100)}{" "}
-            cada
-          </p>
-        </div>
-
-        {/* Controles de quantidade */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 border-cynthia-green-dark/30 bg-transparent"
-            onClick={() => updateQuantity(item.quantity - 1)}
-            disabled={isPending || item.quantity <= 1}
-          >
-            <Minus className="w-3 h-3" />
-          </Button>
-
-          <span className="w-8 text-center font-medium text-cynthia-green-dark">{item.quantity}</span>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 border-cynthia-green-dark/30 bg-transparent"
-            onClick={() => updateQuantity(item.quantity + 1)}
-            disabled={isPending}
-          >
-            <Plus className="w-3 h-3" />
-          </Button>
-        </div>
-
-        {/* Preço total e remover */}
-        <div className="flex flex-col items-end gap-2">
-          <p className="font-bold text-cynthia-green-dark">
-            {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format((item.price * item.quantity) / 100)}
-          </p>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={removeItem}
-            disabled={isPending}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 px-2"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
+    <div className="flex items-center gap-4 p-4 bg-cynthia-cream/30 rounded-lg">
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-white flex-shrink-0">
+        <Image
+          src={getImageUrl(item.product) || "/placeholder.svg"}
+          alt={item.product.nome}
+          fill
+          className="object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.src = "/placeholder.svg"
+          }}
+        />
       </div>
 
-      {/* Botão de observações */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-cynthia-green-dark truncate">{item.product.nome}</h3>
+        <p className="text-sm text-gray-600">{item.variation.nome_tamanho}</p>
+        <p className="text-sm font-medium text-cynthia-green-dark">
+          R$ {(item.variation.preco_centavos / 100).toFixed(2)} cada
+        </p>
+      </div>
+
       <div className="flex items-center gap-2">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          onClick={() => setShowObservations(!showObservations)}
-          className="text-cynthia-orange-pumpkin hover:text-cynthia-orange-pumpkin/80 h-8 px-2"
+          onClick={() => handleUpdateQuantity(item.quantity - 1)}
+          className="h-8 w-8 p-0 border-cynthia-yellow-mustard/50"
         >
-          <MessageSquare className="w-4 h-4 mr-1" />
-          {showObservations ? "Ocultar" : "Adicionar"} observações
+          <Minus className="w-3 h-3" />
+        </Button>
+
+        <Badge
+          variant="secondary"
+          className="bg-cynthia-yellow-light text-cynthia-green-dark min-w-[2rem] justify-center"
+        >
+          {item.quantity}
+        </Badge>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleUpdateQuantity(item.quantity + 1)}
+          className="h-8 w-8 p-0 border-cynthia-yellow-mustard/50"
+        >
+          <Plus className="w-3 h-3" />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRemoveItem}
+          className="h-8 w-8 p-0 border-red-300 text-red-600 hover:bg-red-50 ml-2 bg-transparent"
+        >
+          <Trash2 className="w-3 h-3" />
         </Button>
       </div>
 
-      {/* Campo de observações */}
-      {showObservations && (
-        <div className="pl-4">
-          <Input
-            placeholder="Ex: Sem cebola, bem temperado..."
-            value={item.observations || ""}
-            onChange={(e) => updateObservations(e.target.value)}
-            className="text-sm border-cynthia-orange-pumpkin/30 focus:border-cynthia-orange-pumpkin"
-          />
-        </div>
-      )}
-
-      <Separator className="bg-cynthia-green-dark/10" />
+      <div className="text-right flex-shrink-0">
+        <p className="font-semibold text-cynthia-green-dark">
+          R$ {((item.variation.preco_centavos * item.quantity) / 100).toFixed(2)}
+        </p>
+      </div>
     </div>
   )
 }

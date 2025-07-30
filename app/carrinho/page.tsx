@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import CarrinhoClientPage from "./CarrinhoClientPage"
+import { CarrinhoClientPage } from "./components/carrinho-client-page"
 
 export const metadata: Metadata = {
   title: "Carrinho - Caldos da Cynthia",

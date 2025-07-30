@@ -12,15 +12,16 @@ import { CartSummary } from "./cart-summary"
 import { CheckoutFlow } from "./checkout-flow"
 
 export function CartContainer() {
-  const { items, total } = useCart()
+  const { state, getItemCount, getSubtotal, getTotal } = useCart()
   const [showCheckout, setShowCheckout] = useState(false)
 
-  if (items.length === 0) {
+  // Verificar se o carrinho está vazio
+  if (!state.items || state.items.length === 0) {
     return <EmptyCart />
   }
 
   if (showCheckout) {
-    return <CheckoutFlow onBack={() => setShowCheckout(false)} items={items} total={total} />
+    return <CheckoutFlow onBack={() => setShowCheckout(false)} items={state.items} total={getTotal()} />
   }
 
   return (
@@ -37,7 +38,7 @@ export function CartContainer() {
           <div className="h-6 w-px bg-cynthia-green-dark/20" />
           <h1 className="text-2xl font-bold text-cynthia-green-dark flex items-center gap-2">
             <ShoppingCart className="w-6 h-6" />
-            Meu Carrinho
+            Meu Carrinho ({getItemCount()})
           </h1>
         </div>
       </div>
@@ -47,11 +48,11 @@ export function CartContainer() {
         <div className="lg:col-span-2 space-y-4">
           <Card className="border-cynthia-green-dark/20">
             <CardHeader className="bg-cynthia-cream">
-              <CardTitle className="text-cynthia-green-dark">Itens do Pedido ({items.length})</CardTitle>
+              <CardTitle className="text-cynthia-green-dark">Itens do Pedido ({state.items.length})</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {items.map((item) => (
-                <CartItemCard key={item.id} item={item} />
+            <CardContent className="space-y-4 p-6">
+              {state.items.map((item) => (
+                <CartItemCard key={`${item.product.id}-${item.variation.tamanho_ml}`} item={item} />
               ))}
             </CardContent>
           </Card>
@@ -59,7 +60,7 @@ export function CartContainer() {
 
         {/* Resumo e Checkout */}
         <div className="space-y-4">
-          <CartSummary items={items} total={total} />
+          <CartSummary />
 
           <Button
             onClick={() => setShowCheckout(true)}
