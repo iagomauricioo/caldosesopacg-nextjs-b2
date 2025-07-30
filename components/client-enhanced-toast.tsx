@@ -8,4 +8,4 @@ interface ClientEnhancedToastProviderProps {
 
 export function ClientEnhancedToastProvider({ children }: ClientEnhancedToastProviderProps) {
   return <EnhancedToastProvider>{children}</EnhancedToastProvider>
-} 
+}

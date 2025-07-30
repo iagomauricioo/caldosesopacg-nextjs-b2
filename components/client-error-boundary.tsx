@@ -12,4 +12,4 @@ export function ClientErrorBoundary({ children }: ClientErrorBoundaryProps) {
       {children}
     </ErrorBoundary>
   )
-} 
+}

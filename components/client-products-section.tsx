@@ -9,4 +9,4 @@ interface ClientProductsSectionProps {
 
 export function ClientProductsSection({ products }: ClientProductsSectionProps) {
   return <ProductsSection products={products} />
-} 
+}

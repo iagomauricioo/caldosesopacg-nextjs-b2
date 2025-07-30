@@ -8,4 +8,4 @@ interface ClientCartProviderProps {
 
 export function ClientCartProvider({ children }: ClientCartProviderProps) {
   return <CartProvider>{children}</CartProvider>
-} 
+}

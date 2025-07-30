@@ -222,18 +222,26 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
   return (
     <div className="space-y-6">
       {/* Resumo do Pedido */}
-      <Card className="border-cynthia-green-dark/20">
-        <CardHeader className="bg-cynthia-cream">
-          <CardTitle className="text-cynthia-green-dark">Resumo do Pedido</CardTitle>
+      <Card className="border-cynthia-green-dark/20 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-cynthia-cream to-cynthia-yellow-mustard/20">
+          <CardTitle className="text-cynthia-green-dark flex items-center gap-2">
+            <QrCode className="w-5 h-5" />
+            Resumo do Pedido
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 bg-white">
           {items.map((item) => (
-            <div key={`${item.product.id}-${item.variation.tamanho_ml}`} className="flex justify-between items-center">
+            <div
+              key={`${item.product.id}-${item.variation.tamanho_ml}`}
+              className="flex justify-between items-center p-3 rounded-lg bg-cynthia-cream/30 border border-cynthia-green-dark/10"
+            >
               <div>
                 <p className="font-medium text-cynthia-green-dark">{item.product.nome}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-cynthia-green-dark/70">
                   {item.quantity}x{" "}
-                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.variation.preco_centavos / 100)}
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                    item.variation.preco_centavos / 100,
+                  )}
                 </p>
               </div>
               <p className="font-semibold text-cynthia-green-dark">
@@ -244,16 +252,16 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
             </div>
           ))}
 
-          <Separator />
+          <Separator className="bg-cynthia-green-dark/20" />
 
-          <div className="space-y-2">
-            <div className="flex justify-between">
+          <div className="space-y-2 p-4 bg-cynthia-cream/20 rounded-lg">
+            <div className="flex justify-between text-cynthia-green-dark">
               <span>Subtotal:</span>
               <span>
                 {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(subtotal / 100)}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-cynthia-green-dark">
               <span>Taxa de Entrega:</span>
               <span className={deliveryFee === 0 ? "text-cynthia-green-leaf font-semibold" : ""}>
                 {deliveryFee === 0
@@ -261,9 +269,10 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
                   : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(deliveryFee / 100)}
               </span>
             </div>
+            <Separator className="bg-cynthia-green-dark/20" />
             <div className="flex justify-between text-lg font-bold text-cynthia-green-dark">
               <span>Total:</span>
-              <span>
+              <span className="text-cynthia-orange-pumpkin">
                 {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalWithDelivery / 100)}
               </span>
             </div>
@@ -272,54 +281,76 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
       </Card>
 
       {/* Forma de Pagamento */}
-      <Card className="border-cynthia-green-dark/20">
-        <CardHeader className="bg-cynthia-cream">
-          <CardTitle className="text-cynthia-green-dark">Forma de Pagamento</CardTitle>
+      <Card className="border-cynthia-green-dark/20 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-cynthia-cream to-cynthia-yellow-mustard/20">
+          <CardTitle className="text-cynthia-green-dark flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Forma de Pagamento
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 bg-white">
           <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as typeof paymentMethod)}>
-            <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors">
-              <RadioGroupItem value="PIX" id="pix" className="border-cynthia-green-dark text-cynthia-green-dark" />
-              <Label htmlFor="pix" className="flex items-center gap-2 cursor-pointer flex-1">
-                <Smartphone className="w-5 h-5 text-cynthia-green-leaf" />
+            <div
+              className={`flex items-center space-x-2 p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                paymentMethod === "PIX"
+                  ? "border-cynthia-green-leaf bg-cynthia-green-leaf/10 shadow-md"
+                  : "border-cynthia-green-dark/20 hover:bg-cynthia-cream/30 hover:border-cynthia-green-dark/40"
+              }`}
+            >
+              <RadioGroupItem value="PIX" id="pix" className="border-cynthia-green-dark text-cynthia-green-leaf" />
+              <Label htmlFor="pix" className="flex items-center gap-3 cursor-pointer flex-1">
+                <div className="p-2 rounded-full bg-cynthia-green-leaf/20">
+                  <Smartphone className="w-5 h-5 text-cynthia-green-leaf" />
+                </div>
                 <div>
-                  <p className="font-medium text-cynthia-green-dark">PIX</p>
-                  <p className="text-sm text-muted-foreground">Pagamento instantâneo</p>
+                  <p className="font-semibold text-cynthia-green-dark">PIX</p>
+                  <p className="text-sm text-cynthia-green-dark/70">Pagamento instantâneo</p>
                 </div>
               </Label>
-              <Badge className="bg-cynthia-green-leaf text-white">Recomendado</Badge>
+              <Badge className="bg-cynthia-green-leaf text-white hover:bg-cynthia-green-leaf/90">Recomendado</Badge>
             </div>
 
-            <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors opacity-50">
+            <div className="flex items-center space-x-2 p-4 border-2 rounded-lg opacity-50 border-gray-300 bg-gray-50">
               <RadioGroupItem value="CREDIT_CARD" id="card" disabled className="border-gray-400" />
-              <Label htmlFor="card" className="flex items-center gap-2 cursor-not-allowed flex-1">
-                <CreditCard className="w-5 h-5 text-gray-400" />
+              <Label htmlFor="card" className="flex items-center gap-3 cursor-not-allowed flex-1">
+                <div className="p-2 rounded-full bg-gray-200">
+                  <CreditCard className="w-5 h-5 text-gray-400" />
+                </div>
                 <div>
-                  <p className="font-medium text-gray-400">Cartão de Crédito</p>
+                  <p className="font-semibold text-gray-400">Cartão de Crédito</p>
                   <p className="text-sm text-gray-400">Em breve</p>
                 </div>
               </Label>
             </div>
 
-            <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors">
+            <div
+              className={`flex items-center space-x-2 p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
+                paymentMethod === "DINHEIRO"
+                  ? "border-cynthia-yellow-mustard bg-cynthia-yellow-mustard/10 shadow-md"
+                  : "border-cynthia-green-dark/20 hover:bg-cynthia-cream/30 hover:border-cynthia-green-dark/40"
+              }`}
+            >
               <RadioGroupItem
                 value="DINHEIRO"
                 id="money"
-                className="border-cynthia-green-dark text-cynthia-green-dark"
+                className="border-cynthia-green-dark text-cynthia-yellow-mustard"
               />
-              <Label htmlFor="money" className="flex items-center gap-2 cursor-pointer flex-1">
-                <Banknote className="w-5 h-5 text-cynthia-yellow-mustard" />
+              <Label htmlFor="money" className="flex items-center gap-3 cursor-pointer flex-1">
+                <div className="p-2 rounded-full bg-cynthia-yellow-mustard/20">
+                  <Banknote className="w-5 h-5 text-cynthia-yellow-mustard" />
+                </div>
                 <div>
-                  <p className="font-medium text-cynthia-green-dark">Dinheiro</p>
-                  <p className="text-sm text-muted-foreground">Pagamento na entrega</p>
+                  <p className="font-semibold text-cynthia-green-dark">Dinheiro</p>
+                  <p className="text-sm text-cynthia-green-dark/70">Pagamento na entrega</p>
                 </div>
               </Label>
             </div>
           </RadioGroup>
 
           {paymentMethod === "DINHEIRO" && (
-            <div className="space-y-2 p-4 bg-cynthia-yellow-mustard/10 rounded-lg border border-cynthia-yellow-mustard/20">
-              <Label htmlFor="change" className="text-cynthia-green-dark font-medium">
+            <div className="space-y-3 p-4 bg-gradient-to-r from-cynthia-yellow-mustard/10 to-cynthia-cream/50 rounded-lg border-2 border-cynthia-yellow-mustard/30">
+              <Label htmlFor="change" className="text-cynthia-green-dark font-semibold flex items-center gap-2">
+                <Banknote className="w-4 h-4" />
                 Troco para quanto?
               </Label>
               <Input
@@ -329,21 +360,27 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
                 placeholder="Ex: 50.00"
                 value={changeFor}
                 onChange={(e) => setChangeFor(e.target.value)}
-                className="border-cynthia-yellow-mustard/30 focus:border-cynthia-green-dark"
+                className="border-cynthia-yellow-mustard/50 focus:border-cynthia-green-dark bg-white"
               />
               {changeFor && changeAmount > 0 && (
-                <p className="text-sm text-cynthia-green-dark">
-                  <strong>Troco:</strong>{" "}
-                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(changeAmount)}
-                </p>
+                <div className="p-3 bg-cynthia-green-leaf/10 rounded-lg border border-cynthia-green-leaf/30">
+                  <p className="text-sm text-cynthia-green-dark font-medium">
+                    <strong>Troco:</strong>{" "}
+                    <span className="text-cynthia-green-leaf">
+                      {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(changeAmount)}
+                    </span>
+                  </p>
+                </div>
               )}
               {changeFor && changeAmount < 0 && (
-                <p className="text-sm text-red-600">
-                  Valor insuficiente. Mínimo:{" "}
-                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                    totalWithDelivery / 100,
-                  )}
-                </p>
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                  <p className="text-sm text-red-600 font-medium">
+                    Valor insuficiente. Mínimo:{" "}
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                      totalWithDelivery / 100,
+                    )}
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -352,52 +389,70 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
 
       {/* PIX QR Code */}
       {paymentMethod === "PIX" && pixData && (
-        <Card className="border-cynthia-green-leaf/30">
-          <CardHeader className="bg-cynthia-green-leaf/10">
+        <Card className="border-cynthia-green-leaf/40 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-cynthia-green-leaf/10 to-cynthia-cream/50">
             <CardTitle className="flex items-center gap-2 text-cynthia-green-dark">
-              <QrCode className="w-5 h-5" />
+              <QrCode className="w-5 h-5 text-cynthia-green-leaf" />
               Pagamento PIX
             </CardTitle>
-            <CardDescription>Escaneie o QR Code ou copie o código PIX</CardDescription>
+            <CardDescription className="text-cynthia-green-dark/70">
+              Escaneie o QR Code ou copie o código PIX
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert className="border-cynthia-green-leaf/30 bg-cynthia-green-leaf/5">
+          <CardContent className="space-y-4 bg-white">
+            <Alert className="border-cynthia-green-leaf/40 bg-gradient-to-r from-cynthia-green-leaf/5 to-cynthia-cream/30">
               <Info className="h-4 w-4 text-cynthia-green-leaf" />
               <AlertDescription className="text-cynthia-green-dark">
-                <strong>PIX ID:</strong> {pixData.id}
-                <br />
-                <strong>Valor:</strong>{" "}
-                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                  Math.round(totalWithDelivery) / 100,
-                )}
-                <br />
-                <strong>Referência:</strong> {pixData.externalReference}
-                <br />
-                <strong>Expira em:</strong> 5 minutos
+                <div className="space-y-1">
+                  <p>
+                    <strong>PIX ID:</strong> <span className="font-mono text-sm">{pixData.id}</span>
+                  </p>
+                  <p>
+                    <strong>Valor:</strong>{" "}
+                    <span className="text-cynthia-orange-pumpkin font-semibold">
+                      {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                        Math.round(totalWithDelivery) / 100,
+                      )}
+                    </span>
+                  </p>
+                  <p>
+                    <strong>Referência:</strong> {pixData.externalReference}
+                  </p>
+                  <p>
+                    <strong>Expira em:</strong>{" "}
+                    <span className="text-cynthia-orange-pumpkin font-semibold">5 minutos</span>
+                  </p>
+                </div>
               </AlertDescription>
             </Alert>
 
             <div className="flex flex-col items-center space-y-4">
-              <div className="p-4 bg-white rounded-lg border-2 border-cynthia-green-dark/20">
+              <div className="p-6 bg-white rounded-xl border-4 border-cynthia-green-dark/20 shadow-lg">
                 <Image
                   src={`data:image/png;base64,${pixData.encodedImage}`}
                   alt="QR Code PIX"
                   width={200}
                   height={200}
-                  className="rounded"
+                  className="rounded-lg"
                 />
               </div>
 
               <div className="w-full space-y-2">
-                <Label className="text-cynthia-green-dark font-medium">Código PIX (Copia e Cola)</Label>
+                <Label className="text-cynthia-green-dark font-semibold">Código PIX (Copia e Cola)</Label>
                 <div className="flex gap-2">
-                  <Input value={pixData.payload} readOnly className="font-mono text-xs border-cynthia-green-dark/30" />
+                  <Input
+                    value={pixData.payload}
+                    readOnly
+                    className="font-mono text-xs border-cynthia-green-dark/30 bg-cynthia-cream/20"
+                  />
                   <Button
                     onClick={copyPixCode}
                     variant="outline"
                     size="icon"
-                    className={`border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white ${
-                      pixCopied ? "bg-cynthia-green-leaf text-white" : ""
+                    className={`border-2 transition-all duration-200 ${
+                      pixCopied
+                        ? "bg-cynthia-green-leaf text-white border-cynthia-green-leaf hover:bg-cynthia-green-leaf/90"
+                        : "border-cynthia-green-dark text-cynthia-green-dark hover:bg-cynthia-green-dark hover:text-white"
                     }`}
                   >
                     {pixCopied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -410,16 +465,16 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
       )}
 
       {/* Observações */}
-      <Card className="border-cynthia-green-dark/20">
-        <CardHeader className="bg-cynthia-cream">
+      <Card className="border-cynthia-green-dark/20 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-cynthia-cream to-cynthia-yellow-mustard/20">
           <CardTitle className="text-cynthia-green-dark">Observações (Opcional)</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-white">
           <Textarea
             placeholder="Alguma observação especial para seu pedido?"
             value={observations}
             onChange={(e) => setObservations(e.target.value)}
-            className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark"
+            className="border-cynthia-green-dark/30 focus:border-cynthia-green-dark bg-cynthia-cream/10 min-h-[100px]"
           />
         </CardContent>
       </Card>
@@ -430,17 +485,17 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
           <Button
             onClick={handlePixPayment}
             disabled={loading}
-            className="w-full bg-cynthia-green-dark hover:bg-cynthia-green-dark/90 text-white"
+            className="w-full bg-gradient-to-r from-cynthia-green-dark to-cynthia-green-leaf hover:from-cynthia-green-dark/90 hover:to-cynthia-green-leaf/90 text-white shadow-lg transition-all duration-200"
             size="lg"
           >
             {loading ? (
               <>
-                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                <Clock className="w-5 h-5 mr-2 animate-spin" />
                 Gerando PIX...
               </>
             ) : (
               <>
-                <Smartphone className="w-4 h-4 mr-2" />
+                <Smartphone className="w-5 h-5 mr-2" />
                 Gerar PIX
               </>
             )}
@@ -451,16 +506,19 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
           <Button
             onClick={handleSubmitOrder}
             disabled={loading || (paymentMethod === "DINHEIRO" && changeAmount < 0)}
-            className="w-full bg-cynthia-green-dark hover:bg-cynthia-green-dark/90 text-white"
+            className="w-full bg-gradient-to-r from-cynthia-orange-pumpkin to-cynthia-yellow-mustard hover:from-cynthia-orange-pumpkin/90 hover:to-cynthia-yellow-mustard/90 text-white shadow-lg transition-all duration-200"
             size="lg"
           >
             {loading ? (
               <>
-                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                <Clock className="w-5 h-5 mr-2 animate-spin" />
                 Enviando Pedido...
               </>
             ) : (
-              "Finalizar Pedido"
+              <>
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Finalizar Pedido
+              </>
             )}
           </Button>
         )}

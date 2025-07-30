@@ -8,4 +8,4 @@ interface ClientReviewProviderProps {
 
 export function ClientReviewProvider({ children }: ClientReviewProviderProps) {
   return <ReviewProvider>{children}</ReviewProvider>
-} 
+}
