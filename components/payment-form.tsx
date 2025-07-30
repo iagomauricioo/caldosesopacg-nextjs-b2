@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -83,6 +83,34 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
   const [loading, setLoading] = useState(false)
   const [pixData, setPixData] = useState<PixResponse["data"] | null>(null)
   const [pixCopied, setPixCopied] = useState(false)
+  const [pixTimer, setPixTimer] = useState<number>(300) // 5 minutos em segundos
+
+  // Temporizador do PIX
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
+    if (pixData && pixTimer > 0) {
+      interval = setInterval(() => {
+        setPixTimer((prev) => {
+          if (prev <= 1) {
+            // PIX expirou
+            setPixData(null)
+            toast({
+              title: "PIX Expirado",
+              description: "O código PIX expirou. Gere um novo código.",
+              variant: "destructive",
+            })
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [pixData, pixTimer, toast])
 
   const items = state.items
   const subtotal = getSubtotal()
@@ -114,7 +142,7 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
         description: "Venda de caldos",
         value: Math.round(totalWithDelivery) / 100,
         maxInstallmentCount: 1,
-        notificationEnabled: false
+        notificationEnabled: false,
       }
 
       console.log("📦 Payload Cartão:", creditCardPayload)
@@ -148,7 +176,7 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
 
         // Redirecionar para a URL do pagamento
         window.open(result.data.url, "_blank")
-        
+
         // Aguardar um pouco antes de prosseguir
         setTimeout(() => {
           dispatch({ type: "CLEAR_CART" })
@@ -205,6 +233,7 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
 
       if (result.success && result.data) {
         setPixData(result.data)
+        setPixTimer(300) // Reset timer para 5 minutos
         console.log("🎯 PIX criado com sucesso!")
         console.log("🆔 ID do PIX:", result.data.id)
         console.log("💳 Payload:", result.data.payload)
@@ -339,6 +368,12 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
     }
   }
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
+  }
+
   return (
     <div className="space-y-6">
       {/* Resumo do Pedido */}
@@ -431,7 +466,11 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
             </div>
 
             <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-cynthia-cream/50 transition-colors">
-              <RadioGroupItem value="CREDIT_CARD" id="card" className="border-cynthia-green-dark text-cynthia-green-dark" />
+              <RadioGroupItem
+                value="CREDIT_CARD"
+                id="card"
+                className="border-cynthia-green-dark text-cynthia-green-dark"
+              />
               <Label htmlFor="card" className="flex items-center gap-2 cursor-pointer flex-1">
                 <CreditCard className="w-5 h-5 text-cynthia-green-dark" />
                 <div>
@@ -538,11 +577,24 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
                   </p>
                   <p>
                     <strong>Expira em:</strong>{" "}
-                    <span className="text-cynthia-orange-pumpkin font-semibold">5 minutos</span>
+                    <span
+                      className={`font-semibold ${pixTimer <= 60 ? "text-red-500" : "text-cynthia-orange-pumpkin"}`}
+                    >
+                      {formatTime(pixTimer)}
+                    </span>
                   </p>
                 </div>
               </AlertDescription>
             </Alert>
+
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <div
+                className={`h-2 rounded-full transition-all duration-1000 ${
+                  pixTimer <= 60 ? "bg-red-500" : pixTimer <= 120 ? "bg-yellow-500" : "bg-cynthia-green-leaf"
+                }`}
+                style={{ width: `${(pixTimer / 300) * 100}%` }}
+              />
+            </div>
 
             <div className="flex flex-col items-center space-y-4">
               <div className="p-6 bg-white rounded-xl border-4 border-cynthia-green-dark/20 shadow-lg">
