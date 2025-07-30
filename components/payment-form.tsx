@@ -48,7 +48,7 @@ interface PixResponse {
 }
 
 export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFormProps) {
-  const { items, total, deliveryFee, clearCart } = useCart()
+  const { state, getSubtotal, getTotal, dispatch } = useCart()
   const { toast } = useToast()
 
   const [paymentMethod, setPaymentMethod] = useState<"PIX" | "CREDIT_CARD" | "DINHEIRO">("PIX")
@@ -58,9 +58,20 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
   const [pixData, setPixData] = useState<PixResponse["data"] | null>(null)
   const [pixCopied, setPixCopied] = useState(false)
 
-  const subtotal = total
-  const totalWithDelivery = subtotal + deliveryFee
+  const items = state.items
+  const subtotal = getSubtotal()
+  const totalWithDelivery = getTotal()
+  const deliveryFee = state.deliveryFee
   const changeAmount = changeFor ? Number.parseFloat(changeFor) - totalWithDelivery / 100 : 0
+
+  // Verificação de segurança para items
+  if (!items || items.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-cynthia-green-dark/70">Nenhum item no carrinho</p>
+      </div>
+    )
+  }
 
   const handlePixPayment = async () => {
     console.log("🔥 Criando PIX estático...")
@@ -155,10 +166,10 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
         },
         endereco: clientData.endereco,
         itens: items.map((item) => ({
-          produto_id: item.id,
+          produto_id: item.product.id,
           quantidade: item.quantity,
-          preco_unitario_centavos: item.price,
-          observacoes: item.observations || null,
+          preco_unitario_centavos: item.variation.preco_centavos,
+          observacoes: null,
         })),
         subtotal_centavos: subtotal,
         taxa_entrega_centavos: deliveryFee,
@@ -194,7 +205,7 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
         description: "Seu pedido foi recebido com sucesso.",
       })
 
-      clearCart()
+      dispatch({ type: "CLEAR_CART" })
       onPaymentSuccess()
     } catch (error) {
       console.error("❌ Erro ao enviar pedido:", error)
@@ -217,18 +228,17 @@ export default function PaymentForm({ clientData, onPaymentSuccess }: PaymentFor
         </CardHeader>
         <CardContent className="space-y-4">
           {items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center">
+            <div key={`${item.product.id}-${item.variation.tamanho_ml}`} className="flex justify-between items-center">
               <div>
-                <p className="font-medium text-cynthia-green-dark">{item.name}</p>
+                <p className="font-medium text-cynthia-green-dark">{item.product.nome}</p>
                 <p className="text-sm text-muted-foreground">
                   {item.quantity}x{" "}
-                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.price / 100)}
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.variation.preco_centavos / 100)}
                 </p>
-                {item.observations && <p className="text-xs text-cynthia-orange-pumpkin">Obs: {item.observations}</p>}
               </div>
               <p className="font-semibold text-cynthia-green-dark">
                 {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                  (item.price * item.quantity) / 100,
+                  (item.variation.preco_centavos * item.quantity) / 100,
                 )}
               </p>
             </div>

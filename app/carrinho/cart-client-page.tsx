@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ShoppingCart, Minus, Plus, Trash2, User, CreditCard, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react"
 import { ClientForm } from "@/components/client-form"
-import { PaymentForm } from "@/components/payment-form"
+import PaymentForm from "@/components/payment-form"
 import Image from "next/image"
 import Link from "next/link"
 import type { Product } from "@/types/product"
@@ -258,9 +258,18 @@ function CartClientPage() {
                 <TabsContent value="payment" className="space-y-6">
                   {clientId ? (
                     <PaymentForm
-                      clientId={clientId}
-                      totalAmount={getSubtotal() / 100 + 5}
-                      onPaymentComplete={handlePaymentComplete}
+                      clientData={{
+                        nome: "Cliente", // TODO: Buscar dados do cliente
+                        telefone: "00000000000", // TODO: Buscar dados do cliente
+                        endereco: {
+                          rua: "Rua",
+                          numero: "123",
+                          bairro: "Bairro",
+                          cidade: "Cidade",
+                          cep: "00000-000",
+                        }
+                      }}
+                      onPaymentSuccess={handlePaymentComplete}
                     />
                   ) : (
                     <Alert className="border-yellow-400 bg-yellow-50">

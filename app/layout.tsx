@@ -2,10 +2,9 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { CartProvider } from "@/contexts/cart-context"
-import { ReviewProvider } from "@/contexts/review-context"
-import { EnhancedToastProvider } from "@/components/enhanced-toast"
-import { ErrorBoundary } from "@/components/error-boundary"
+import { ClientCartProvider } from "@/components/client-cart-provider"
+import { ClientReviewProvider } from "@/components/client-review-provider"
+import { ClientEnhancedToastProvider } from "@/components/client-enhanced-toast"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -32,13 +31,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={inter.className}>
-        <ErrorBoundary>
-          <CartProvider>
-            <ReviewProvider>
-              <EnhancedToastProvider>{children}</EnhancedToastProvider>
-            </ReviewProvider>
-          </CartProvider>
-        </ErrorBoundary>
+        <ClientCartProvider>
+          <ClientReviewProvider>
+            <ClientEnhancedToastProvider>{children}</ClientEnhancedToastProvider>
+          </ClientReviewProvider>
+        </ClientCartProvider>
       </body>
     </html>
   )

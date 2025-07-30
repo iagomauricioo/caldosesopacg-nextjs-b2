@@ -1,17 +1,15 @@
-"use client"
 import { Suspense } from "react"
-import { Header } from "@/components/header"
+import { ClientHeader } from "@/components/client-header"
 import { PageLoadingSkeleton } from "@/components/loading-states"
-import { ErrorBoundary, DefaultErrorFallback } from "@/components/error-boundary"
 import type { Product } from "@/types/product"
 import { Footer } from "@/components/footer"
-import { MobileNavbar } from "@/components/mobile-navbar"
-import { FloatingLeaves } from "@/components/animations/floating-leaves"
+import { ClientMobileNavbar } from "@/components/client-mobile-navbar"
+import { ClientFloatingLeaves } from "@/components/client-floating-leaves"
 import { HeroSection } from "@/components/home/hero-section"
 import { PromotionAlert } from "@/components/home/promotion-alert"
-import { ProductsSection } from "@/components/home/products-section"
+import { ClientProductsSection } from "@/components/client-products-section"
 import { WhyChooseUsSection } from "@/components/home/why-choose-us-section"
-import { CTASection } from "@/components/home/cta-section"
+import { ClientCTASection } from "@/components/client-cta-section"
 import { getProducts } from "@/lib/products-api"
 
 // Mock data baseado na sua API
@@ -94,35 +92,33 @@ export default async function HomePage() {
   const { products, error } = await getProducts()
 
   return (
-    <ErrorBoundary fallback={DefaultErrorFallback}>
-      <div className="min-h-screen bg-cynthia-cream">
-        <FloatingLeaves />
-        <Header />
+    <div className="min-h-screen bg-cynthia-cream">
+      <ClientFloatingLeaves />
+      <ClientHeader />
 
-        <HeroSection />
-        <PromotionAlert />
+      <HeroSection />
+      <PromotionAlert />
 
-        {error && (
-          <section className="container mx-auto px-4 pb-4">
-            <div className="border-yellow-400 bg-yellow-50 border rounded-lg p-4">
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 text-yellow-600">ℹ️</div>
-                <p className="text-yellow-800">{error}</p>
-              </div>
+      {error && (
+        <section className="container mx-auto px-4 pb-4">
+          <div className="border-yellow-400 bg-yellow-50 border rounded-lg p-4">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 text-yellow-600">ℹ️</div>
+              <p className="text-yellow-800">{error}</p>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <ProductsSection products={products} />
-        </Suspense>
+      <Suspense fallback={<PageLoadingSkeleton />}>
+        <ClientProductsSection products={products} />
+      </Suspense>
 
-        <WhyChooseUsSection />
-        <CTASection />
+      <WhyChooseUsSection />
+      <ClientCTASection />
 
-        <Footer />
-        <MobileNavbar />
-      </div>
-    </ErrorBoundary>
+      <Footer />
+      <ClientMobileNavbar />
+    </div>
   )
 }
