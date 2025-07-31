@@ -3,12 +3,8 @@
 import { useState, useMemo, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, Filter, X, SlidersHorizontal } from "lucide-react"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Search } from "lucide-react"
 import type { Product } from "@/types/product"
 
 interface SearchAndFiltersProps {
@@ -23,11 +19,18 @@ export function SearchAndFilters({ products, onFilteredProducts }: SearchAndFilt
   const [sortBy, setSortBy] = useState("popularity")
   const [showFilters, setShowFilters] = useState(false)
 
+  // Verificação de segurança
+  if (!products || !Array.isArray(products)) {
+    return null
+  }
+
   // Calcular faixa de preços dos produtos
   const { minPrice, maxPrice } = useMemo(() => {
-    if (products.length === 0) return { minPrice: 0, maxPrice: 50 }
+    if (!products || products.length === 0) return { minPrice: 0, maxPrice: 50 }
 
-    const prices = products.flatMap((product) => product.variacoes.map((v) => v.preco_centavos / 100))
+    const prices = products.flatMap((product) => product.variacoes?.map((v) => v.preco_centavos / 100) || [])
+
+    if (prices.length === 0) return { minPrice: 0, maxPrice: 50 }
 
     return {
       minPrice: Math.floor(Math.min(...prices)),

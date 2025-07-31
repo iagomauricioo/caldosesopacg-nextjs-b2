@@ -1,16 +1,4 @@
-import { Suspense } from "react"
-import { ClientHeader } from "@/components/client-header"
-import { PageLoadingSkeleton } from "@/components/loading-states"
 import type { Product } from "@/types/product"
-import { Footer } from "@/components/footer"
-import { ClientMobileNavbar } from "@/components/client-mobile-navbar"
-import { ClientFloatingLeaves } from "@/components/client-floating-leaves"
-import { HeroSection } from "@/components/home/hero-section"
-import { PromotionAlert } from "@/components/home/promotion-alert"
-import { ClientProductsSection } from "@/components/client-products-section"
-import { WhyChooseUsSection } from "@/components/home/why-choose-us-section"
-import { ClientCTASection } from "@/components/client-cta-section"
-import { getProducts } from "@/lib/products-api"
 
 // Mock data baseado na sua API
 const mockProducts: Product[] = [
@@ -88,37 +76,28 @@ const mockProducts: Product[] = [
   },
 ]
 
-export default async function HomePage() {
-  const { products, error } = await getProducts()
+export async function getProducts(): Promise<{ products: Product[]; error?: string }> {
+  try {
+    // Simular delay da API
+    await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  return (
-    <div className="min-h-screen bg-cynthia-cream">
-      <ClientFloatingLeaves />
-      <ClientHeader />
+    const response = await fetch("https://api.caldosesopacg.com/api/v1/produtos", {
+      next: { revalidate: 300 }, // Cache por 5 minutos
+    })
 
-      <HeroSection />
-      <PromotionAlert />
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
 
-      {error && (
-        <section className="container mx-auto px-4 pb-4">
-          <div className="border-yellow-400 bg-yellow-50 border rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 text-yellow-600">ℹ️</div>
-              <p className="text-yellow-800">{error}</p>
-            </div>
-          </div>
-        </section>
-      )}
+    const responseJson = await response.json()
+    const products = responseJson.data || []
 
-      <Suspense fallback={<PageLoadingSkeleton />}>
-        <ClientProductsSection products={products} />
-      </Suspense>
-
-      <WhyChooseUsSection />
-      <ClientCTASection />
-
-      <Footer />
-      <ClientMobileNavbar />
-    </div>
-  )
+    return { products }
+  } catch (error) {
+    console.error("Erro ao carregar produtos da API:", error)
+    return {
+      products: mockProducts,
+      error: "Usando dados de exemplo - API indisponível",
+    }
+  }
 }
